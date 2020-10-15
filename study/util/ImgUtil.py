@@ -4,7 +4,6 @@ import random
 
 def save_pictureurl(url, lujing, headers = None):
   opener = urllib.request.build_opener()
-  ua = get_UserAgents()
   opener.addheaders = [('User-agent',get_UserAgents())]
   urllib.request.install_opener(opener)
   try:
@@ -59,5 +58,4 @@ def get_UserAgents():
     "Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.94 Safari/537.36"
   ]
 
-  UserAgent = random.choice(UserAgents)
-  return UserAgent
+  return random.choice(UserAgents)

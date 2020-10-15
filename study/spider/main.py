@@ -1,9 +1,7 @@
 import os
-import urllib.request
-
-import requests,json,time,ImgUtil
-
+import requests,json,ImgUtil
 import proxyUtil
+
 # https://www.veryins.com/vivian19941008 接口
 
 def save(data, k,n):

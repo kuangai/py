@@ -1,3 +1,6 @@
+import sys
+
+sys.path.append('..')
 a = 'hhh%s' % 'aaa'
 print(a)
 

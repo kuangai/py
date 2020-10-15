@@ -1,21 +1,17 @@
 import os
-import re
 import urllib.request
-import sys
 from bs4 import BeautifulSoup
-
 import ImgUtil
-# https://www.uyn8.cn/
-sys.path.append('..')
-import ImgUtil as imgutil
 
-def save(imgurl,code):
+# https://www.uyn8.cn/
+
+def save(imgurl, code):
   path = "../../../img/A/"
-  file_name ='{}{}.jpg'.format(path,code)
+  file_name ='{}{}.jpg'.format(path, code)
   if os.path.exists(file_name):
     print("文件已存在,不再下载")
   else:
-    ImgUtil.save_pictureurl(imgurl,file_name)
+    ImgUtil.save_pictureurl(imgurl, file_name)
 
 url = "https://www.uyn8.cn/archives/1084"
 

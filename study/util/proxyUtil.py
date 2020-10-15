@@ -22,7 +22,7 @@ def get_hosts(url="https://www.kuaidaili.com/free"):
 
 def get_proxy_list():
 
-    path = "C:/study/py/study/util/proxy.json"
+    path = "../util/proxy.json"
     with open(path, 'r', encoding='utf-8', errors='ignore') as f:
         try:
             info_dict = json.load(f,strict=False)
@@ -76,5 +76,5 @@ def get_random_proxy():
     ip = random.choice(get_proxy_list())
     print("本次使用的随机代理：" + str(ip))
     return ip
-
-# print(get_random_proxy())
+if __name__=="__main__":
+    print(get_random_proxy())
