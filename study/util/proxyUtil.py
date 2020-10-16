@@ -1,4 +1,7 @@
+import datetime
 import json
+import os
+import time
 import urllib.request
 
 from bs4 import BeautifulSoup
@@ -23,6 +26,7 @@ def get_hosts(url="https://www.kuaidaili.com/free"):
 def get_proxy_list():
 
     path = "../util/proxy.json"
+
     with open(path, 'r', encoding='utf-8', errors='ignore') as f:
         try:
             info_dict = json.load(f,strict=False)

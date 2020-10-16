@@ -1,6 +1,8 @@
 import urllib.request
 import random
-
+import math
+from PIL import Image
+import os
 
 def save_pictureurl(url, lujing, headers = None):
   opener = urllib.request.build_opener()
@@ -57,5 +59,34 @@ def get_UserAgents():
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.93 Safari/537.36",
     "Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.94 Safari/537.36"
   ]
-
   return random.choice(UserAgents)
+
+
+def make_img_wall(path = os.getcwd(), image_size = 2560):
+    # 获取文件夹内头像个数
+    length = len(os.listdir(path))
+    # 设置每个头像大小
+    each_size = math.ceil(image_size / math.floor(math.sqrt(length)))
+    # 计算所需各行列的头像数量
+    x_lines = math.ceil(math.sqrt(length))
+    y_lines = math.ceil(math.sqrt(length))
+    image = Image.new('RGB', (each_size * x_lines, each_size * y_lines))
+    x = 0
+    y = 0
+    for (root, dirs, files) in os.walk(path):
+        for pic_name in files:
+            # 增加头像读取不出来的异常处理
+            try:
+                with Image.open(path + pic_name) as img:
+                    img = img.resize((each_size, each_size))
+                    image.paste(img, (x * each_size, y * each_size))
+                    x += 1
+                if x == x_lines:
+                    x = 0
+                    y += 1
+            except IOError:
+                print("头像读取失败")
+            image.save(path + "wechat.png")
+            print('头像拼接完成!')
+if __name__=="__main__":
+    print("main")
