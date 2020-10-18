@@ -22,13 +22,13 @@ i = 1
 
 while True:
 
-    url = "https://www.2meinv.com/article-1032-" + str(i) + ".html"
+    url = "https://www.junmeitu.com/beauty/enlvbabe_tongyanjuruxingganmeinv_mfstar_vol_237-" + str(i) + ".html"
     resp = requests.get(url, timeout=5)
     html_doc = resp.content.decode("utf-8")
     print(html_doc)
     soup = BeautifulSoup(html_doc, "html.parser", from_encoding="utf-8")
     # 获取所有的链接
-    div = soup.find('div', class_="pp hh")
+    div = soup.find('div', class_="pictures")
 
     print("已处理： " + str(i) + "次")
     i = i + 1
@@ -37,7 +37,7 @@ while True:
     file = name[len(name)-1]
     print(img.get("src"))
     print(file)
-    p = save(img.get("src"),file)
+    p = save( img.get("src"),file)
     if p == 1:
         break
 

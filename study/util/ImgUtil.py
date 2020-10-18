@@ -65,6 +65,7 @@ def get_UserAgents():
 def make_img_wall(path = os.getcwd(), image_size = 2560):
     # 获取文件夹内头像个数
     length = len(os.listdir(path))
+    print("文件夹{}下{}共{}张！".format(path,str(length)))
     # 设置每个头像大小
     each_size = math.ceil(image_size / math.floor(math.sqrt(length)))
     # 计算所需各行列的头像数量
@@ -89,4 +90,5 @@ def make_img_wall(path = os.getcwd(), image_size = 2560):
             image.save(path + "wechat.png")
             print('头像拼接完成!')
 if __name__=="__main__":
+    make_img_wall("../../../img/A/S/")
     print("main")

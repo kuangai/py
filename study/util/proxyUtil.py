@@ -1,13 +1,12 @@
-import datetime
 import json
-import os
-import time
-import urllib.request
-
-from bs4 import BeautifulSoup
-import requests
 import random
-#随机代理获取的网站
+import urllib.request
+import requests
+from bs4 import BeautifulSoup
+import fileUtil
+
+
+#随机代理一天一换
 
 def get_hosts(url="https://www.kuaidaili.com/free"):
 
@@ -26,7 +25,12 @@ def get_hosts(url="https://www.kuaidaili.com/free"):
 def get_proxy_list():
 
     path = "../util/proxy.json"
-
+    diff_time = fileUtil.diff_lastModifyTime_now(path)
+    if diff_time > 12:
+        with open(path, 'w', encoding='utf-8') as f1:
+            f1.write(json.dumps("[]", indent=4, ensure_ascii=False))
+            print("代理文件距离现在{} 小时，可能已过期，清空重新抓取！")
+            print("已清除！")
     with open(path, 'r', encoding='utf-8', errors='ignore') as f:
         try:
             info_dict = json.load(f,strict=False)
@@ -67,18 +71,23 @@ def get_proxy_list():
             except Exception as e:
                 host_list.remove(host)
             continue
-    for i in range(0,len(proxy_list)):
-        print("过滤后的代理：" + str(proxy_list[i]) )
+    if len(proxy_list) > 0:
+        for i in range(0,len(proxy_list)):
+            print("过滤后的代理：" + str(proxy_list[i]) )
+    else:
+        print("该网站无可用代理！")
 
     with open(path, 'w', encoding='utf-8') as f1:
         f1.write(json.dumps(proxy_list, indent=4, ensure_ascii=False))
         print("代理对象已存入文件！")
     return proxy_list
 
-#从代理IP列表中随机取出一个IP并返回
+#从代理代理列表中随机取出一个代理并返回
 def get_random_proxy():
     ip = random.choice(get_proxy_list())
     print("本次使用的随机代理：" + str(ip))
     return ip
+
+
 if __name__=="__main__":
     print(get_random_proxy())

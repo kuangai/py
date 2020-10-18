@@ -13,19 +13,27 @@ def save(imgurl, code):
   else:
     ImgUtil.save_pictureurl(imgurl, file_name)
 
-url = "https://www.uyn8.cn/archives/1084"
 
+url = '''
+https://www.tbk123.com/xgmn/59820.html
+'''
+#
+#
 html_doc = urllib.request.urlopen(url, timeout=5).read()
 
 soup = BeautifulSoup(html_doc,"html.parser",from_encoding="utf-8")
 #获取所有的链接
-
-for i in soup.find_all('img',class_="aligncenter"):
-    name = str(i.get("src")).split("/")
+div = soup.find('div',class_="post row")
+imgs = div.find_all('img',class_="post-item-img lazy")
+count = 0
+for i in imgs:
+    count = count + 1
+    name = str(i.get("data-original")).split("/")
     file = name[len(name)-1]
-    print(i.get("src"))
+    print(i.get("data-original"))
     print(file)
-    save(i.get("src"),file)
+    save(i.get("data-original"),file)
+    print("已处理{}张！".format(str(count)))
 
 
 
