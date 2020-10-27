@@ -1,5 +1,7 @@
 import os
 import urllib.request
+
+import requests
 from bs4 import BeautifulSoup
 import ImgUtil
 
@@ -14,13 +16,29 @@ def save(imgurl, code):
     ImgUtil.save_pictureurl(imgurl, file_name)
 
 
+headers = {
+  "authority": "https://www.bhhzw.com",
+  "method": "GET",
+
+  "scheme": "https",
+  "accept": "*/*",
+  "accept-encoding": "gzip, deflate",
+  "accept-language": "zh-CN,zh;q=0.9",
+  "content-length": "0",
+  "cookie":"__cfduid=d61bf35c7645b248ec3945d3c3521d39a1603005552; X_CACHE_KEY=60a11eee707486e6d096190ac68ba20f; _ga=GA1.2.1802991227.1603195437; _gid=GA1.2.1914316790.1603195437",
+  "origin":"https://www.bhhzw.com",
+  "referer" :"https://www.bhhzw.com/category/xinggan/",
+  "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.75 Safari/537.36",
+}
+
+
 url = '''
-https://www.tbk123.com/xgmn/11657.html
+https://www.bhhzw.com/archives/1736.html
 '''
 #
 #
-html_doc = urllib.request.urlopen(url, timeout=5).read()
-
+resp = requests.get(url,headers=headers, timeout=4)
+html_doc = resp.content.decode("utf-8")
 soup = BeautifulSoup(html_doc,"html.parser",from_encoding="utf-8")
 #获取所有的链接
 div = soup.find('div',class_="post row")

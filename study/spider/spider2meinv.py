@@ -22,7 +22,7 @@ i = 1
 
 while True:
 
-    url = "https://www.2meinv.com/article-763-" + str(i) + ".html"
+    url = "https://www.2meinv.com/article-3690-" + str(i) + ".html"
     resp = requests.get(url, timeout=5)
     html_doc = resp.content.decode("utf-8")
     print(html_doc)

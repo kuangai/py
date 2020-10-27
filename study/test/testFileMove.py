@@ -40,7 +40,7 @@ def getallfile(path):
 
 
 if not os.path.exists(source_file_path):
-    print "源文件不存在，目录路径" + source_file_path
+    print ("源文件不存在，目录路径" + source_file_path)
     sys.exit(-1)
 if not os.path.exists(dest_file_path):
     os.makedirs(dest_file_path)
@@ -83,5 +83,5 @@ for tempfile in allfiles:
                 continue
             else:
                 shutil.move(tempfile, dest_path_ext)
-print "移动文件成功"
+print ("移动文件成功")
 sys.exit(0)
