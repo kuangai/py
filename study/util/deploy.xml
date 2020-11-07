@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<deploy name="Kafka">
+  <basic describe="基本信息">
+    <packType describe="包类型" options="pack:全量包;patch:补丁包">pack</packType>
+    <systemType describe="系统类型">inner</systemType>
+    <appType describe="应用类型">Kafka</appType>
+    <appName describe="应用名称">Kafka</appName>
+    <appDescribe describe="应用说明">kafka服务组件</appDescribe>
+    <version describe="应用版本">2.2.0-11-linux</version>
+    <packInEffect describe="影响的主包（只有补丁需要配置，填写主包的版本号）"></packInEffect>
+  </basic>
+
+  <!-- 全系统全局参数配置，参数可以包括input、select、mselect(可多选）、grid -->
+  <globalConfig describe="系统全局配置">
+      <variables describe="集群参数集">
+          <field name="user" label="安装用户" type="input">root</field>
+          <field name="workspace" label="安装目录" type="input" validate="Dir" >/home/kafka</field>
+          <field name="kafka_port" label="kafka对外提供服务的端口" tooltip="默认9092" type="input" >9092</field>
+          <field name="clearHistory" label="清空历史数据" type="switch" options="true:是;false:否">true</field>
+      </variables>
+  </globalConfig>
+  <subSystems describe="子系统集合">
+    <system id="kafka" type="" name="Kafka" mode="cluster" >s
+    </system>
+    <system id="kafka" type="" name="Kafka" mode="cluster" >
+      <monitors>
+        <monitor template="kafka-kafka.json"></monitor>
+      </monitors>
+      <scale maxSize="" minSize="1" describe="kafka集群"/>
+      <scripts describe="kafka脚本">
+        <script name="beforeInstall" path="./scripts/beforeInstall.sh" describe="安装前检查" />
+        <script name="install" path="./scripts/install.sh" describe="安装" />
+        <script name="uninstall" path="./scripts/uninstall.sh" describe="卸载" />
+        <script name="start" path="./scripts/start.sh" describe="启动" />
+        <script name="stop" path="./scripts/stop.sh" describe="停止" />
+        <script name="validateStart" path="./scripts/validateStart.sh" describe="验证启动" />
+        <script name="validateStop" path="./scripts//validateStop.sh" describe="验证停止" />
+      </scripts>
+      <variables describe="集群参数集">
+        <field name="zk_host" label="ZK地址" tooltip="kafka关联的zk地址" type="input" required="false" ></field>
+        <field name="kafka_zk_root" label="ZK根目录" tooltip="kafka在zookeeper中的根目录" type="input" ></field>
+        <field name="zk_user" label="ZK用户" tooltip="ZK的认证用户" type="input" required="false" ></field>
+        <field name="zk_pwd" label="ZK密码" tooltip="ZK的认证用户的密码" type="input" required="false" ></field>
+        <field name="log_dirs" label="日志存放路径" tooltip="消息存放的目录" type="input" >/home/root/kafka/log</field>
+        <field name="data_dirs" label="数据存放路径" tooltip="数据存放的目录" type="input" >/home/root/kafka/data</field>
+        <field name="check_interval" label="轮询时间" tooltip="周期性检查文件失效的时间，单位秒" type="input" >300</field>
+        <field name="kafka_retention_hours" label="缓存时间" tooltip="消息文件保留的最长时间，单位小时" type="input" >168</field>
+        <field name="jmx_port" label="JMX端口" tooltip="JMX监控的端口，既通过JDK自带的JConsole来观察结果" type="input" >9988</field>
+        <field name="num_network_threads" label="网络线程数" tooltip="borker进行网络处理的线程数" type="input" >3</field>
+        <field name="num_io_threads" label="I/O线程数" tooltip="broker处理磁盘IO的线程数，数值应该大于你的硬盘" type="input" >8</field>
+        <field name="message_max_bytes" label="最大消息长度" tooltip="单条消息最大大小，单位字节" type="input" >10485760</field>
+        <field name="socket_send_buffer_bytes" label="发送缓冲区大小" tooltip="发送套接字的缓冲区大小" type="input" >102400</field>
+        <field name="socket_receive_buffer_bytes" label="接收缓冲区大小" tooltip="接收套接字的缓冲区大小" type="input" >102400</field>
+        <field name="socket_request_max_bytes" label="请求缓冲区最大值" tooltip="请求套接字的缓冲区大小" type="input" >104857600</field>
+        <field name="num_partitions" label="默认分区数" tooltip="topic在当前broker上的分片个数" type="input" >1</field>
+        <field name="default_replication_factor" label="消息副本数" tooltip="消息副本数" type="input" >1</field>
+        <field name="offsets_topic_replication_factor" label="offset记录的副本数" tooltip="topic的offset的备份份数" type="input" >1</field>
+        <field name="num_recovery_threads_per_data_dir" label="恢复数据的线程数" tooltip="用来恢复和清理data下数据的线程数量" type="input" >1</field>
+        <field name="delete_topic_enable" label="运行时删除主题" tooltip="是否运行删除topic,false表示指标记删除，true表示能直接删除" type="input" >true</field>
+        <field name="log_segment_bytes" label="segment大小" tooltip="日志文件中每个segment的大小默认1G" type="input" >1073741824</field>
+        <field name="log_cleaner_enable" label="日志清理开关" tooltip="日志清理是否打开" type="input" >true</field>
+        <field name="zookeeper_connection_timeout_ms" label="zk连接超时时间" tooltip="zookeeper连接超时时间" type="input" >30</field>
+        <field name="uninstall_timeout" label="uninstall超时时间" tooltip="uninstall超时时间" type="input" >-1</field>
+        <field name="kafka_replicas_switch" label="自定义副本" type="hidden" options="true:ON;false:OFF">false</field>
+        <field name="validateStart_timeout" label="检测脚本超时时间" type="input">500</field>
+      </variables>
+      <node>
+        <config path="${workspace}/software/kafka/bin/kafka-run-class.sh" template="./kafka-run-class.sh" ></config>
+        <config path="${workspace}/software/kafka/bin/kafka-server-start.sh" template="./kafka-server-start.sh" ></config>
+        <config path="${workspace}/software/kafka/config/server.properties" template="./server.properties" reference="kafka"></config>
+        <config path="./scripts/beforeInstall.sh" encoding="UTF-8" reference="kafka"/>
+        <config path="./scripts/install.sh" encoding="UTF-8" reference="kafka"/>
+        <config path="./scripts/start.sh" encoding="UTF-8" reference="kafka"/>
+        <config path="./scripts/stop.sh" encoding="UTF-8" reference="kafka"/>
+        <config path="./scripts/validateStart.sh" encoding="UTF-8" reference="kafka"/>
+        <config path="./scripts/validateStop.sh" encoding="UTF-8" reference="kafka"/>
+        <config path="./scripts/uninstall.sh" encoding="UTF-8" reference="kafka"/>
+      </node>
+    </system>
+  </subSystems>
+</deploy>

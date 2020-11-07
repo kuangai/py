@@ -7,12 +7,17 @@ print("判断文件或文件夹是否存在，结果：" + ("存在" if os.path.
 
 # 遍历文件夹下的文件
 def oop_files(path = "../util"):
-    a=0
     for (root, dirs, files) in os.walk(path):
-        print("root:" + root)
-        print("dirs: " + str(dirs))
-        print("files:" + str(files))
-        a=a+1
-        print("循环次数：",a)
+        # root 表示当前正在访问的文件夹路径
+        # dirs 表示该文件夹下的子目录名list
+        # files 表示该文件夹下的文件list
 
-#判断文件的最后修改时间
+        # 遍历文件
+        for f in files:
+            print(os.path.join(root, f))
+
+        # 遍历所有的文件夹
+        for d in dirs:
+            print(os.path.join(root, d))
+
+oop_files()
