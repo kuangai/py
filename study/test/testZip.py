@@ -1,5 +1,7 @@
+import configparser
 import os
 import sys
+import time
 import xml.etree.ElementTree as ET
 import zipfile
 
@@ -194,30 +196,43 @@ def main(dirss, excel_path):
         print(s)
 
 
+def load_conf(path='./conf/conf.ini'):
+    print('正在加载配置文件……')
+    config = configparser.ConfigParser()
+    try:
+        config.read(filenames=path, encoding='utf-8')  # utf-8-sig
+        print("安装包路径：【{}】".format(config.get("path", "dir")))
+        print("excel路径：【{}】".format(config.get("path", "excel_path")))
+    except:
+        print('加载失败，请检查配置文件conf/conf.ini……')
+        print('3秒后自动退出……')
+        for i in range(0,3):
+            print(str(3-i) + '……')
+            time.sleep(1)
+        sys.exit('end……')
+    return {'dir': config.get("path", "dir"), 'excel_path': config.get("path", "excel_path")}
+
+
 if __name__ == '__main__':
-    print('请输入安装包所在目录:')
-    # D:\test
-    # D:\test\test.xlsx
+
     while True:
-        dirs = input()
-        if sys.argv.__contains__('debug'):
-            dirs = 'D:\\test'
-        if os.path.isdir(dirs):
-            print('目录正确')
+        conf = load_conf()
+        if os.path.isdir(conf.get('dir')):
+            print('安装包路径OK……')
+        else:
+            print('安装包路径不存在，请修改配置后按 enter……')
+            skip = input()
+            continue
+
+        if os.path.exists(conf.get('excel_path')) and conf.get('excel_path').endswith('.xlsx'):
+            print('excel路径OK……')
             break
         else:
-            print('输入错误，请重新输入……')
-    print('请输入excel路径：')
-    while True:
-        excel_path = input()
-        if sys.argv.__contains__('debug'):
-            excel_path = 'D:\\test\\test.xlsx'
-        if os.path.exists(excel_path) and excel_path.endswith('.xlsx'):
-            print('excel路径正确')
-            break
-        else:
-            print('输入错误，请重新输入……')
+            print('excel路径错误，请修改配置后按 enter……')
+            skip = input()
+            continue
+
     print('---start---')
-    main(dirs, excel_path)
+    main(conf.get('dir'), conf.get('excel_path'))
     print('---end---')
-    msg = input()
+    skip = input()

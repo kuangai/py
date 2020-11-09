@@ -8,9 +8,9 @@ from openpyxl import load_workbook
 def write_excel_append(path, sheet_name, dateframe=None):
     # 参数说明: [变量顺序可改变，依次是：sheet页对象，要写入的dataframe对象，从哪一行开始写入]
 
-    writer = pd.ExcelWriter(path, engine='openpyxl',mode='a')  # 用于首次写入还可自动加表头
+    writer = pd.ExcelWriter(path, engine='openpyxl', mode='a')  # 用于首次写入还可自动加表头
     workbook = load_workbook(path)  # 打开要写入数据的工作簿
-    writer.book = workbook
+    writer.book = workbook  # 激活工作薄
     rows = dateframe.shape[0]  # 获得行数
     cols = dateframe.shape[1]  # 列数
     # 如果sheet不存在,直接写入，存在，从指定位置写入

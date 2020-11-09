@@ -4,7 +4,7 @@ import pandas as pd
 
 from openpyxl import load_workbook
 
-
+# 向已存在的sheet追加数据，sheet不存在则创建后追加
 def write_excel_append(path, sheet_name, dateframe=None):
     # 参数说明: [变量顺序可改变，依次是：sheet页对象，要写入的dataframe对象，从哪一行开始写入]
 
