@@ -4,7 +4,6 @@ import sys
 import time
 import xml.etree.ElementTree as ET
 import zipfile
-
 import pandas as pd
 from openpyxl import load_workbook
 from pandas import DataFrame
@@ -131,19 +130,23 @@ def deal_zip(zip=None, zip_name='', excel_path=None):
         print('excel路径错误，本次跳过……')
         return
     # 打印zip文件中的文件列表
-    if zip.namelist().__contains__('deploy.xml'):
+    contains = [x for i, x in enumerate(zip.namelist()) if x.find('deploy.xml') != -1]
+    if len(contains) > 0:
         print('当前压缩文件【{}】存在deploy.xml，提取文件。'.format(zip_name))
-        xml = zip.extract('deploy.xml', path=None, pwd=None)
+        xml = zip.extract(contains[0], path=None, pwd=None)
         re = xml2excel(xml, excel_path)
         os.remove(xml)
         print('当前压缩文件【{}】处理完成！\n'.format(zip_name))
     else:
+
         for filename in zip.namelist():
             if filename.__contains__('core_sdk'):
                 coresdk = zip.extract(filename, path=None, pwd=None)
                 sdkzip = zipfile.ZipFile(coresdk, "r")
-                if sdkzip.namelist().__contains__('deploy.xml'):
-                    xml = sdkzip.extract('deploy.xml', path=None, pwd=None)
+
+                contains1 = [x for i, x in enumerate(sdkzip.namelist()) if x.find('deploy.xml') != -1]
+                if len(contains1) > 0:
+                    xml = sdkzip.extract(contains1[0], path=None, pwd=None)
                     re = xml2excel(xml, excel_path)
                     os.remove(xml)
                     print('当前压缩文件【{}】处理完成！\n'.format(zip_name))
@@ -153,6 +156,7 @@ def deal_zip(zip=None, zip_name='', excel_path=None):
 
                 sdkzip.close()
                 os.remove(str(coresdk))
+                break
 
     zip.close()
     return re

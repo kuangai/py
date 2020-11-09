@@ -1,81 +1,251 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<deploy name="Kafka">
-  <basic describe="基本信息">
-    <packType describe="包类型" options="pack:全量包;patch:补丁包">pack</packType>
-    <systemType describe="系统类型">inner</systemType>
-    <appType describe="应用类型">Kafka</appType>
-    <appName describe="应用名称">Kafka</appName>
-    <appDescribe describe="应用说明">kafka服务组件</appDescribe>
-    <version describe="应用版本">2.2.0-11-linux</version>
-    <packInEffect describe="影响的主包（只有补丁需要配置，填写主包的版本号）"></packInEffect>
-  </basic>
+<deploy>
+    <basic describe="基本信息">
+        <packType describe="包类型" options="pack:全量包;patch:补丁包">pack</packType>
+        <primaryType describe="系统类型">IPS</primaryType>
+        <secondaryType describe="应用类型">basic_uft</secondaryType>
+        <appName describe="应用名称">IPS-基础_uft</appName>
+        <appDescribe describe="应用说明"></appDescribe>
+        <version describe="应用版本">IPS1.0-basicV202001.02.000</version>
+        <packInEffect describe="影响的主包（只有补丁需要配置，填写主包的版本号）"></packInEffect>
+		<group describe="应用分组 ">IPS</group>
+    </basic>
 
-  <!-- 全系统全局参数配置，参数可以包括input、select、mselect(可多选）、grid -->
-  <globalConfig describe="系统全局配置">
-      <variables describe="集群参数集">
-          <field name="user" label="安装用户" type="input">root</field>
-          <field name="workspace" label="安装目录" type="input" validate="Dir" >/home/kafka</field>
-          <field name="kafka_port" label="kafka对外提供服务的端口" tooltip="默认9092" type="input" >9092</field>
-          <field name="clearHistory" label="清空历史数据" type="switch" options="true:是;false:否">true</field>
-      </variables>
-  </globalConfig>
-  <subSystems describe="子系统集合">
-    <system id="kafka" type="" name="Kafka" mode="cluster" >s
-    </system>
-    <system id="kafka" type="" name="Kafka" mode="cluster" >
-      <monitors>
-        <monitor template="kafka-kafka.json"></monitor>
-      </monitors>
-      <scale maxSize="" minSize="1" describe="kafka集群"/>
-      <scripts describe="kafka脚本">
-        <script name="beforeInstall" path="./scripts/beforeInstall.sh" describe="安装前检查" />
-        <script name="install" path="./scripts/install.sh" describe="安装" />
-        <script name="uninstall" path="./scripts/uninstall.sh" describe="卸载" />
-        <script name="start" path="./scripts/start.sh" describe="启动" />
-        <script name="stop" path="./scripts/stop.sh" describe="停止" />
-        <script name="validateStart" path="./scripts/validateStart.sh" describe="验证启动" />
-        <script name="validateStop" path="./scripts//validateStop.sh" describe="验证停止" />
-      </scripts>
-      <variables describe="集群参数集">
-        <field name="zk_host" label="ZK地址" tooltip="kafka关联的zk地址" type="input" required="false" ></field>
-        <field name="kafka_zk_root" label="ZK根目录" tooltip="kafka在zookeeper中的根目录" type="input" ></field>
-        <field name="zk_user" label="ZK用户" tooltip="ZK的认证用户" type="input" required="false" ></field>
-        <field name="zk_pwd" label="ZK密码" tooltip="ZK的认证用户的密码" type="input" required="false" ></field>
-        <field name="log_dirs" label="日志存放路径" tooltip="消息存放的目录" type="input" >/home/root/kafka/log</field>
-        <field name="data_dirs" label="数据存放路径" tooltip="数据存放的目录" type="input" >/home/root/kafka/data</field>
-        <field name="check_interval" label="轮询时间" tooltip="周期性检查文件失效的时间，单位秒" type="input" >300</field>
-        <field name="kafka_retention_hours" label="缓存时间" tooltip="消息文件保留的最长时间，单位小时" type="input" >168</field>
-        <field name="jmx_port" label="JMX端口" tooltip="JMX监控的端口，既通过JDK自带的JConsole来观察结果" type="input" >9988</field>
-        <field name="num_network_threads" label="网络线程数" tooltip="borker进行网络处理的线程数" type="input" >3</field>
-        <field name="num_io_threads" label="I/O线程数" tooltip="broker处理磁盘IO的线程数，数值应该大于你的硬盘" type="input" >8</field>
-        <field name="message_max_bytes" label="最大消息长度" tooltip="单条消息最大大小，单位字节" type="input" >10485760</field>
-        <field name="socket_send_buffer_bytes" label="发送缓冲区大小" tooltip="发送套接字的缓冲区大小" type="input" >102400</field>
-        <field name="socket_receive_buffer_bytes" label="接收缓冲区大小" tooltip="接收套接字的缓冲区大小" type="input" >102400</field>
-        <field name="socket_request_max_bytes" label="请求缓冲区最大值" tooltip="请求套接字的缓冲区大小" type="input" >104857600</field>
-        <field name="num_partitions" label="默认分区数" tooltip="topic在当前broker上的分片个数" type="input" >1</field>
-        <field name="default_replication_factor" label="消息副本数" tooltip="消息副本数" type="input" >1</field>
-        <field name="offsets_topic_replication_factor" label="offset记录的副本数" tooltip="topic的offset的备份份数" type="input" >1</field>
-        <field name="num_recovery_threads_per_data_dir" label="恢复数据的线程数" tooltip="用来恢复和清理data下数据的线程数量" type="input" >1</field>
-        <field name="delete_topic_enable" label="运行时删除主题" tooltip="是否运行删除topic,false表示指标记删除，true表示能直接删除" type="input" >true</field>
-        <field name="log_segment_bytes" label="segment大小" tooltip="日志文件中每个segment的大小默认1G" type="input" >1073741824</field>
-        <field name="log_cleaner_enable" label="日志清理开关" tooltip="日志清理是否打开" type="input" >true</field>
-        <field name="zookeeper_connection_timeout_ms" label="zk连接超时时间" tooltip="zookeeper连接超时时间" type="input" >30</field>
-        <field name="uninstall_timeout" label="uninstall超时时间" tooltip="uninstall超时时间" type="input" >-1</field>
-        <field name="kafka_replicas_switch" label="自定义副本" type="hidden" options="true:ON;false:OFF">false</field>
-        <field name="validateStart_timeout" label="检测脚本超时时间" type="input">500</field>
-      </variables>
-      <node>
-        <config path="${workspace}/software/kafka/bin/kafka-run-class.sh" template="./kafka-run-class.sh" ></config>
-        <config path="${workspace}/software/kafka/bin/kafka-server-start.sh" template="./kafka-server-start.sh" ></config>
-        <config path="${workspace}/software/kafka/config/server.properties" template="./server.properties" reference="kafka"></config>
-        <config path="./scripts/beforeInstall.sh" encoding="UTF-8" reference="kafka"/>
-        <config path="./scripts/install.sh" encoding="UTF-8" reference="kafka"/>
-        <config path="./scripts/start.sh" encoding="UTF-8" reference="kafka"/>
-        <config path="./scripts/stop.sh" encoding="UTF-8" reference="kafka"/>
-        <config path="./scripts/validateStart.sh" encoding="UTF-8" reference="kafka"/>
-        <config path="./scripts/validateStop.sh" encoding="UTF-8" reference="kafka"/>
-        <config path="./scripts/uninstall.sh" encoding="UTF-8" reference="kafka"/>
-      </node>
-    </system>
-  </subSystems>
+    <!-- 全系统全局参数配置，参数可以包括input、select、mselect(可多选）、grid -->
+    <globalConfig describe="系统全局配置">
+		<customize>
+			<groupMode describe="部署分组模式">fastestWithDependOnGroup</groupMode>
+		</customize>
+		<services>
+				<service type="RabbitMQ" matcher="single" defaultValue="rabbitQueue">
+					<ciphers>
+						<cipher key="svc_rabbitmq_password" algorithm="JRES_SM4"/>
+						<cipher key="svc_rabbitmq_password" algorithm="CRES_SM4"/>
+					</ciphers>
+				</service>	
+				<service type="ZooKeeper" matcher="single">
+				</service>
+				<service type="Redis" matcher="single"></service>
+				<service type="Kafka" matcher="single"></service>
+				<!--非基础包需要打开此配置项，用于引用基础的变量-->
+				<service type="app_system" primaryType="IPS" secondaryType="basic" matcher="single"/>
+				<!--service type="app_system" primaryType="IPS" secondaryType="basic" varPrefix="basic" matcher="single"/-->
+		</services>	
+        <variables describe="全局变量">
+            <field name="gcc_lib_path" label="gcc连接路径" type="hidden" validate="" >/usr/lib/gcc/x86_64-redhat-linux/4.8.2/include</field>
+            <field name="uft_level" label="uft日志级别" type="select" visible="false" validate="" tooltip="日志记录级别，0-5，0代表记录所有日志，5代表只记录ERROR日志" options="0:0;1:1;2:2;3:3;4:4;5:5" >1</field>
+            <field name="uft_level_core" label="uftcore日志级别" type="select" visible="false" validate="" tooltip="ERROR: 日志级别(3), 记录发生错误事件;WARN:  日志级别(2), 记录出现潜在错误的情形
+;INFO:  日志级别(1), 记录应用程序的运行过程;DEBUG: 日志级别(0), 细粒度信息事件，记录调试应用程序信息" options="0:0;1:1;2:2;3:3" >1</field>
+            <field name="uft_level_h5" label="h5日志级别" type="select" visible="false" validate="" tooltip="ERROR: 日志级别(3), 记录发生错误事件;WARN:  日志级别(2), 记录出现潜在错误的情形
+;INFO:  日志级别(1), 记录应用程序的运行过程;DEBUG: 日志级别(0), 细粒度信息事件，记录调试应用程序信息" options="0:0;1:1;2:2;3:3" >3</field>
+            <field name="uft_level_u2db" label="u2db日志级别" type="select" visible="false" validate="" tooltip="ERROR: 日志级别(3), 记录发生错误事件;WARN:  日志级别(2), 记录出现潜在错误的情形
+;INFO:  日志级别(1), 记录应用程序的运行过程;DEBUG: 日志级别(0), 细粒度信息事件，记录调试应用程序信息" options="0:0;1:1;2:2;3:3" >3</field>
+            <field name="uft_level_hbtrans" label="hbtrans日志级别" type="select" visible="false" validate="" tooltip="ERROR: 日志级别(3), 记录发生错误事件;WARN:  日志级别(2), 记录出现潜在错误的情形
+;INFO:  日志级别(1), 记录应用程序的运行过程;DEBUG: 日志级别(0), 细粒度信息事件，记录调试应用程序信息" options="0:0;1:1;2:2;3:3" >3</field>
+			<field name="uft_mount_desc" label="UFT挂载注意事项" type="label" visible="true" validate="">UFT高可用nfs挂载时需要root用户手动执行scrpits/UFT/nfs/install_mount.sh</field>
+      <field name="UHQ" type="division" label="UHQ服务器后台行情配置">
+        <field name="UHQMarket" label="行情市场" type="grid">
+        上海L1,0x101,100.112.45.13,19099,,;深圳L1,0x102,100.112.45.13,19099,,;中金,0x303,100.112.45.13,19099,,;上期,0x304,100.112.45.13,19099,,;大连,0x305,100.112.45.13,19099,,;郑州,0x306,100.112.45.13,19099,,;上海个股期权,0xd01,100.112.45.13,19099,,;深圳个股期权,0xd02,100.112.45.13,19099,,;中金所期权,0x1103,100.112.45.13,19099,,;上期所期权,0x1104,100.112.45.13,19099,,;大商所期权,0x1105,100.112.45.13,19099,,;郑商所期权,0x1106,100.112.45.13,19099,,;上海港股通,0x506,100.112.45.13,19099,,;深圳港股通,0x507,100.112.45.13,19099,,;能源交易所,0x30D,100.112.45.13,19099,,;固收非公开报价行情,0x60b,100.112.45.13,19099,,;新三板,0x10b,100.112.45.13,19099,,
+          <field name="mktname" label="市场名称" type="input" validate="" >上海L1</field>
+          <field name="mkttype" label="市场类型" type="input" validate="" >0x101</field>
+          <field name="svrip" label="服务IP（主）" type="input" validate="IP" >100.112.45.13</field>
+          <field name="svrport" label="服务端口（主）" type="input" validate="" >19099</field>
+          <field name="svrip_standby" label="服务IP（备）" type="input" required="false" validate="IP" ></field>
+          <field name="svrport_standby" label="服务端口（备）" type="input" required="false" validate="" ></field>
+        </field>
+      </field>
+        </variables>
+    </globalConfig>
+
+    <!-- 配置系统包含的部署集群、分片、分布式框架等 -->
+    <subSystems describe="子系统集合">
+	
+	
+        <!--uft节点信息-->
+        <system id="uft" type="server" name="uft" mode="cluster">
+            <repository><URL>./UFT_basic.zip</URL></repository>
+            <scale minSize="1" maxSize="20" describe="集群规模"></scale>
+            <dependency describe="基础依赖项，如tomcat、JDK等，部署程序仅将基础基础资源上传，操作由脚本完成">
+            </dependency>
+            <variables describe="集群基本参数">
+                <field name="user" validate="" type="input" label="运行用户">trade</field>
+                <field name="workspace" validate="" type="input" label="下发目录" value="" tooltip="下发目录为安装目录后接一层应用名的目录">/home/trade/ips/ips-uft/basic</field>
+				<field name="install_workspace" validate="" type="input" label="安装目录" value="">/home/trade/ips/ips-uft</field>
+				<field name="cmc_flag" type="switch" label="cmc插件开关" tooltip="开启代表该应用启用cmc插件" options="true:是;false:否">false</field>
+				<field name="apppartition_flag" label="是否开启多交易中心" tooltip="开关开启为多交易中心" type="switchForm" default="false" required="true"  visible="true" fold="true">
+					<field name="apppartition" label="分片号" tooltip="分片号用于多交易中心扩展部署，支持1~9" type="input"    visible="true">1</field>
+					<field name="group_name" label="分组名" tooltip="不同分片需要配置不同的分组名，不然会认为是主备关系，而不是分片关系，主备关系要维持分组名一致" type="input"    visible="true">uft</field>
+				</field>
+				<field name="polling_interval" validate="" type="input" label="轮询间隔" value="" tooltip="订阅者推送线程轮询间隔，单位毫秒。降低该配置有助于降低推送单笔延迟，但是会增加CPU资源占用。">500</field>
+                <field name="validateStart_timeout" label="启动检测超时时间" type="hidden" validate="Integer">180</field>
+                <field name="validateStop_timeout" label="停止检测超时时间" type="hidden" validate="Integer">180</field>
+				<field type="complexSelect"
+						name="thread_num"
+						label="UFT配置"
+						options="1:高性能配置;2:普通配置;3:自定义配置"
+						visible="true"
+						tooltip="UFT配置"
+						required="true"
+						upgrade="false"
+						default="1"
+						fold="true">
+					<form name="1">
+						<field name="slow_thread_num" label="慢线程数" type="input" visible="true" validate="" expose="true" >20</field>
+						<field name="fast_thread_num" label="快线程数" type="input" visible="true" validate="" expose="true" >40</field>
+						<field name="async_push_thread_num" label="异步推送线程数" type="input" visible="true" validate="" >8</field>
+						<field name="equity_cancel_thread_num" label="权益撤单线程数" type="input" visible="true" validate="" >5</field>
+						<field name="derivative_cancel_thread_num" label="衍生品撤单线程数" type="input" visible="true" validate="" >5</field>
+						<field name="fixed_income_cancel_thread_num" label="固收撤单线程数" type="input" visible="true" validate="" >5</field>
+						<field name="equity_return_thread_num" label="权益回报线程数" type="input" visible="true" validate="" >10</field>
+						<field name="derivative_return_thread_num" label="衍生品回报线程数" type="input" visible="true" validate="" >10</field>
+						<field name="equity_quotation_thread_num" label="权益行情落库线程数" type="input" visible="true" validate="" >5</field>
+						<field name="derivative_quotation_thread_num" label="衍生品行情落库线程数" type="input" visible="true" validate="" >5</field>
+						<field name="mem_pool_level" label="内存值等级" type="input" visible="true" validate="" >10</field>
+						<field name="block_count" label="每个等级含有的内存块数" type="input" visible="true" validate="" >3200</field>
+						<field name="unit_shift_size" label="最小内存块大小" type="input" visible="true" validate="" >8</field>
+						<field name="record_pool_capacity" label="记录池的最大记录条数" type="input" visible="true" validate="" >50000000</field>
+					</form>
+					<form name="2">
+						<field name="slow_thread_num" label="慢线程数" type="input" visible="true" validate="" expose="true" >4</field>
+						<field name="fast_thread_num" label="快线程数" type="input" visible="true" validate="" expose="true" >8</field>
+						<field name="async_push_thread_num" label="异步推送线程数" type="input" visible="true" validate="" >2</field>
+						<field name="equity_cancel_thread_num" label="权益撤单线程数" type="input" visible="true" validate="" >1</field>
+						<field name="derivative_cancel_thread_num" label="衍生品撤单线程数" type="input" visible="true" validate="" >1</field>
+						<field name="fixed_income_cancel_thread_num" label="固收撤单线程数" type="input" visible="true" validate="" >1</field>
+						<field name="equity_return_thread_num" label="权益回报线程数" type="input" visible="true" validate="" >2</field>
+						<field name="derivative_return_thread_num" label="衍生品回报线程数" type="input" visible="true" validate="" >2</field>
+						<field name="equity_quotation_thread_num" label="权益行情落库线程数" type="input" visible="true" validate="" >1</field>
+						<field name="derivative_quotation_thread_num" label="衍生品行情落库线程数" type="input" visible="true" validate="" >1</field>
+						<field name="mem_pool_level" label="内存值等级" type="input" visible="true" validate="" >1</field>
+						<field name="block_count" label="每个等级含有的内存块数" type="input" visible="true" validate="" >1024</field>
+						<field name="unit_shift_size" label="最小内存块大小" type="input" visible="true" validate="" >10</field>
+						<field name="record_pool_capacity" label="记录池的最大记录条数" type="input" visible="true" validate="" >500000</field>
+					</form>
+					<form name="3">
+						<field name="slow_thread_num" label="慢线程数" type="input" visible="true" validate="" expose="true" >20</field>
+						<field name="fast_thread_num" label="快线程数" type="input" visible="true" validate="" expose="true" >40</field>
+						<field name="async_push_thread_num" label="异步推送线程数" type="input" visible="true" validate="" >8</field>
+						<field name="equity_cancel_thread_num" label="权益撤单线程数" type="input" visible="true" validate="" >5</field>
+						<field name="derivative_cancel_thread_num" label="衍生品撤单线程数" type="input" visible="true" validate="" >5</field>
+						<field name="fixed_income_cancel_thread_num" label="固收撤单线程数" type="input" visible="true" validate="" >5</field>
+						<field name="equity_return_thread_num" label="权益回报线程数" type="input" visible="true" validate="" >10</field>
+						<field name="derivative_return_thread_num" label="衍生品回报线程数" type="input" visible="true" validate="" >10</field>
+						<field name="equity_quotation_thread_num" label="权益行情落库线程数" type="input" visible="true" validate="" >5</field>
+						<field name="derivative_quotation_thread_num" label="衍生品行情落库线程数" type="input" visible="true" validate="" >5</field>
+						<field name="mem_pool_level" label="内存值等级" type="input" visible="true" validate="" >10</field>
+						<field name="block_count" label="每个等级含有的内存块数" type="input" visible="true" validate="" >3200</field>
+						<field name="unit_shift_size" label="最小内存块大小" type="input" visible="true" validate="" >8</field>
+						<field name="record_pool_capacity" label="记录池的最大记录条数" type="input" visible="true" validate="" >50000000</field>
+					</form>
+				</field>
+            </variables>     
+            <scripts describe="集群脚本集">
+                <script name="beforeInstall" path="./scripts/UFT/beforeinstall.sh" describe="安装前处理" />
+                <script name="install" path="./scripts/UFT/basic/install.sh" describe="部署" />
+                <script name="afterInstall" path="./scripts/UFT/afterInstall.sh" describe="安装后处理" />
+                <script name="start" path="${install_workspace}/scripts/UFT/run_uft.sh" describe="启动" />
+                <script name="stop" path="${install_workspace}/scripts/UFT/stop_uft.sh" describe="停止" />
+                <script name="validateStart" path="${install_workspace}/scripts/UFT/validateStart_uft.sh" describe="启动状态检测" />
+                <script name="validateStop" path="${install_workspace}/scripts/UFT/validateStop_uft.sh" describe="停止状态监测" />
+                <script name="backup" path="./scripts/UFT/back_up_uft.sh" describe="备份" />
+                <script name="rollback" path="./scripts/UFT/rollback_uft.sh" describe="回滚" />
+                <script name="uninstall" path="./scripts/UFT/basic/uninstall.sh" describe="卸载" />
+            </scripts>
+			<databases>
+                <database varPrefix="tradevar" sourceType="dbServer" database="dbtrade" user="dbtrade" id="dbtrade" rolling="true" backup="false" enable="true" title="交易数据库" >
+					<matchers>
+						<matcher key="label" values="IPS" operator="and"/>
+					</matchers>
+					<ciphers>
+						<cipher key="password" algorithm="JRES_SM4"/>
+						<cipher key="password" algorithm="CRES_SM4"/>
+					</ciphers>
+				</database>
+				<database varPrefix="bizframevar" sourceType="dbServer" database="bizframe" user="bizframe" id="bizframe" rolling="true" backup="false" enable="true" title="操作员中心数据库" >
+					<matchers>
+						<matcher key="label" values="IPS" operator="and"/>
+					</matchers>
+					<ciphers>
+						<cipher key="password" algorithm="JRES_SM4"/>
+						<cipher key="password" algorithm="CRES_SM4"/>
+					</ciphers>
+				</database>
+				<database varPrefix="reportvar" sourceType="dbServer" database="dbreport" user="dbreport" id="dbreport" rolling="true" title="报表数据库" backup="false" enable="true">
+					<matchers>
+						<matcher key="label" values="IPS" operator="and"/>
+					</matchers>
+					<ciphers>
+						<cipher key="password" algorithm="JRES_SM4"/>
+						<cipher key="password" algorithm="CRES_SM4"/>
+					</ciphers>
+				</database>
+            </databases>
+            <config path="./scripts/UFT/basic/install.sh" encoding="UTF-8" />
+			<config path="./scripts/UFT/basic/uninstall.sh" encoding="UTF-8" />
+			<config path="./scripts/UFT/nfs/install_mount.sh" encoding="UTF-8" />
+			<config path="./scripts/UFT/nfs/uninstall_mount.sh" encoding="UTF-8" />
+            <config path="./scripts/UFT/beforeinstall.sh" encoding="UTF-8" />
+            <config path="./scripts/UFT/afterInstall.sh" encoding="UTF-8" />
+            <config template="./UFT/back_up_uft.sh" path="./scripts/UFT/back_up_uft.sh" encoding="UTF-8" />
+            <config path="./scripts/UFT/rollback_uft.sh" encoding="UTF-8" />
+            <config path="${install_workspace}/scripts/UFT/validateStart_uft.sh" encoding="UTF-8" />
+            <config path="${install_workspace}/scripts/UFT/validateStop_uft.sh" encoding="UTF-8" />
+            <config template="./UFT/kill_uft.sh" path="./scripts/UFT/kill_uft.sh" encoding="UTF-8" />
+			<config template="./UFT/stop_uft.sh" path="${install_workspace}/scripts/UFT/stop_uft.sh" encoding="UTF-8" />
+            <config template="./UFT/dlog_info.xml" path="${install_workspace}/workspace/dlog_info.xml" encoding="gbk" ></config>
+            <config template="./UFT/kill_uft.sh" path="${install_workspace}/workspace/kill_uft.sh" encoding="UTF-8" ></config>
+            <config template="./UFT/hbtranconfig_basic.xml" path="${install_workspace}/workspace/hbtranconfig_basic.xml" encoding="gbk" ></config>
+            <config template="./UFT/u2dbtransconfig_basic.xml" path="${install_workspace}/workspace/u2dbtransconfig_basic.xml" encoding="gbk" ></config>
+			<config template="./UFT/hbtranconfig_cmc_basic.xml" path="${install_workspace}/workspace/hbtranconfig_cmc_basic.xml" encoding="gbk" ></config>
+            <config template="./UFT/uftdb_rfthread.xml" path="${install_workspace}/workspace/uftdb_rfthread.xml" encoding="UTF-8" ></config>          
+            <config template="./sign_basic.txt" path="${install_workspace}/sign_basic.txt" encoding="UTF-8" ></config><!--版本信息-->
+            <node describe="uft节点私有配置信息" unique="true">
+                <variables>
+                    <!--<field name="ar_UHQ" type="division" label="ar_UHQ配置信息">-->
+                        <field name="aruhq_app_name" validate="" type="hidden" label="应用名" value="">auhq_ls</field>
+                        <field name="aruhq_f2port" label="F2端口" type="input" visible="false" validate="" >10150</field>
+                        <field name="aruhq_t2port" label="T2端口" type="input" visible="false" validate="" >10030</field>
+                    <!--</field>-->
+                    <!--<field name="ar_hbtran" type="division" label="ar_hbtran配置信息">-->
+                        <field name="ar_hbtran_app_name" validate="" type="hidden" label="应用名" value="">ahbtran_ls</field>
+                        <field name="ar_hbtran_f2port" label="ar_hbtran F2端口" type="input" visible="false" validate="" >10151</field>
+                        <field name="ar_hbtran_t2port" label="ar_hbtran T2端口" type="input" visible="false" validate="" >10031</field>
+                    <!--</field>-->
+                    <!--<field name="ar_todb" type="division" label="ar_todb配置信息">-->
+                        <field name="ar_todb_app_name" validate="" type="hidden" label="应用名" value="">ar_todb</field>
+                        <field name="ar_todb_f2port" label="ar_todbF2端口" type="input" visible="false" validate="" >10152</field>
+                    <!--</field>-->
+                    <!--<field name="ar_u2db" type="division" label="ar_u2db配置信息">-->
+                        <field name="ar_u2db_app_name" validate="" type="hidden" label="应用名" value="">au2db_ls</field>
+                        <field name="ar_u2db_f2port" label="ar_u2db F2端口" type="input" visible="false" validate="" >10153</field>
+                        <field name="ar_u2db_t2port" label="ar_u2db T2端口" type="input" visible="false" validate="" >10032</field>
+                    <!--</field>-->
+                    <!--<field name="ar_uftdb" type="division" label="ar_uftdb配置信息">-->
+                        <field name="ar_uftdb_app_name" validate="" type="hidden" label="应用名" value="">ar_uftdb</field>
+                        <field name="ar_uftdb_t2port" label="ar_uftdb T2端口" type="input" visible="false" validate="" >10033</field>
+                        <field name="ar_uftdb_f2port" label="ar_uftdb F2端口" type="input" visible="false" validate="" >10154</field>
+                        <field name="ar_uftdb_rpt_port" label="ar_uftdb 报盘插件端口" type="input" visible="false" validate="" >10155</field>
+                    <!--</field>-->
+                    <!--<field name="ar_todb" type="division" label="ar_todb配置信息">-->
+                        <field name="ar_cmc_f2port" label="ar_cmc F2端口" type="input" visible="false" validate="" >10159</field>
+                    <!--</field>-->
+                </variables>
+                <config path="./scripts/UFT/nfs/install_mount.sh" encoding="UTF-8" reference="uft" />
+                <config path="./scripts/UFT/nfs/uninstall_mount.sh" encoding="UTF-8" reference="uft" />
+                <config path="${install_workspace}/scripts/UFT/run_uft.sh" encoding="UTF-8" ></config>
+                <config template="./UFT/nrs.xml" path="${install_workspace}/workspace/nrs.xml" encoding="gbk"></config>
+                <config template="./UFT/bash_profile" path="${install_workspace}/.bash_profile" encoding="UTF-8"></config>
+                <config template="./UFT/UHQ.xml" path="${install_workspace}/workspace/UHQ.xml" encoding="gbk" ></config>
+                <config template="./UFT/my.cnf" path="${install_workspace}/workspace/my.cnf" encoding="UTF-8" ></config>
+                <config template="./UFT/ar_uhq.xml" path="${install_workspace}/workspace/ar_uhq.xml" encoding="UTF-8"></config>
+                <config template="./UFT/ar_hbtran.xml" path="${install_workspace}/workspace/ar_hbtran.xml" encoding="UTF-8"></config>
+                <config template="./UFT/ar_todb.xml" path="${install_workspace}/workspace/ar_todb.xml" encoding="UTF-8"></config>
+                <config template="./UFT/ar_u2db.xml" path="${install_workspace}/workspace/ar_u2db.xml" encoding="UTF-8"></config>
+                <config template="./UFT/ar_uftdb.xml" path="${install_workspace}/workspace/ar_uftdb.xml" encoding="UTF-8"></config>
+                <config template="./UFT/ar_todb_basic.xml" path="${install_workspace}/workspace/ar_todb_basic.xml" encoding="gbk"></config>
+                <config template="./UFT/ar_uftdb_basic.xml" path="${install_workspace}/workspace/ar_uftdb_basic.xml" encoding="gbk"></config>
+                <config template="./UFT/ar_hbtran_cmc.xml" path="${install_workspace}/workspace/ar_hbtran_cmc.xml" encoding="UTF-8"></config>
+            </node>
+        </system>
+    </subSystems>    
 </deploy>
