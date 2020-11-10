@@ -33,3 +33,16 @@ def write_excel_append(path, sheet_name, dateframe=None):
         for j in range(0, cols):  # value.shape[1]获得列数
             sheet.cell(row=start_row + 1 + i, column=j + 1, value=dateframe.iloc[i][j])
     workbook.save(path)
+
+def hidden_sheet(path='D:\\test\\test.xlsx', sheet_name='服务信息'):
+    """
+    隐藏sheet
+    :param path:
+    :param sheet_name:
+    :return:
+    """
+    workbook = load_workbook(path)  # 打开要写入数据的工作簿
+    if sheet_name in workbook.sheetnames:
+        sheet = workbook[sheet_name]  # 打开要编辑的工作表
+        sheet.sheet_state = 'hidden'
+    workbook.save(path)
