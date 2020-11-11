@@ -1,4 +1,5 @@
 # coding=utf-8
+import json
 
 import pandas as pd
 
@@ -43,5 +44,44 @@ def hidden_sheet(path='D:\\test\\test.xlsx', sheet_name='服务信息'):
     workbook.save(path)
 
 
+def read_excel(path='D:\\test\\test.xlsx', sheet_name='Sheet1'):
+    workbook = load_workbook(path)
+
+    worksheet = workbook.get_sheet_by_name(sheet_name)
+
+    row3 = [item.value for item in list(worksheet.rows)[2]]
+
+    print('第3行值', row3)
+
+    col3 = [item.value for item in list(worksheet.columns)[2]]
+
+    print('第3行值', col3)
+
+    cell_2_3 = worksheet.cell(row=2, column=3).value
+
+    print('第2行第3列值', cell_2_3)
+
+    max_row = worksheet.max_row
+
+    print('最大行', max_row)
+
+def excel_to_json(excel_file,json_file=''):
+    wb= load_workbook(excel_file)#读取excel文件
+    excel_data={}#定义字典excel_data存储每个表的数据{表名:数据}
+    for sheet in wb.sheetnames:
+        result = []  # 定义列表result存储所有读取数据
+        for rows in wb[sheet]:#获取表的每一行数据
+            tmp=[]#定义列表tmp存储每一行的数据
+            for cell in rows:#遍历一行每个单元格的数据
+                tmp.append(cell.value)
+            result.append(tmp)
+        excel_data[sheet]=result
+    print(excel_data)
+    #覆盖写入json文件
+    # with open(json_file, mode='w', encoding='utf-8') as jf:
+      #  json.dump(excel_data, jf, indent=2, sort_keys=True, ensure_ascii=False)
+
+
 if __name__ == '__main__':
-    hidden_sheet()
+    #  hidden_sheet()
+    read_excel()

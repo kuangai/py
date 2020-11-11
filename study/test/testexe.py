@@ -9,6 +9,40 @@ from openpyxl import load_workbook
 from pandas import DataFrame
 
 
+def get_map(path='D:\\test\\test.xlsx', sheet_name='Sheet1', k_col_index=3, v_col_index=4):
+    """
+    两列转map
+    :param k_col_index:
+    :param v_col_index:
+    :return:
+    """
+    map = {}
+    workbook = load_workbook(path)
+    worksheet = workbook[sheet_name]
+    for i in range(1, worksheet.max_row):
+        key = worksheet.cell(row=i + 1, column=k_col_index).value
+        # val = worksheet.cell(row=i, column=v_col_index).value
+        val = [item.value for item in list(worksheet.rows)[i]]
+        if key is None:
+            # map[key] = val 不会报错
+            print('\033[4;33m' + '第【{}】行【{}】列为空，已跳过……'.format(i, k_col_index) + '\033[0m')
+        else:
+            if val is None:
+                print('\033[4;33m' + '第【{}】行【{}】列为空'.format(i, v_col_index) + '\033[0m')
+            map[key] = val
+
+    print(map)
+    return map
+
+
+def hidden_sheet(path='D:\\test\\test.xlsx', sheet_name='服务信息'):
+    workbook = load_workbook(path)  # 打开要写入数据的工作簿
+    if sheet_name in workbook.sheetnames:
+        sheet = workbook[sheet_name]  # 打开要编辑的工作表
+        sheet.sheet_state = 'hidden'
+    workbook.save(path)
+
+
 def write_excel_append(path, sheet_name, dateframe=None):
     # 参数说明: [变量顺序可改变，依次是：sheet页对象，要写入的dataframe对象，从哪一行开始写入]
 
@@ -66,36 +100,23 @@ def r_find_all(root_tag, target='field', type=None):
     return re
 
 
-def xml2excel(xml_path=None, excel_path=None):
+def xml2excel(xml_path=None, excel_path=None, lists={}):
     try:
         if xml_path == None or excel_path == None:
             return
-        date = []
+        params = []
+        nodemap = {}
+        package = []
+
         with open(xml_path, 'tr', encoding='utf-8') as rf:
             tree = ET.parse(rf)
             root = tree.getroot()
             basic = root.find('basic')
-            systemTypes = basic.find('systemType')
-            primaryType = basic.find('primaryType')
-            if systemTypes != None:
-                systemType = systemTypes.text
-            else:
-                if primaryType != None:
-                    systemType = primaryType.text
-                else:
-                    systemType = '未解析'
+            systemType = lists[0]
 
-            appTypes = basic.find('appType')
-            secondaryType = basic.find('secondaryType')
-            if appTypes != None:
-                appType = appTypes.text
-            else:
-                if secondaryType != None:
-                    appType = secondaryType.text
-                else:
-                    appType = '未解析'
+            appType = lists[1]
 
-            appName = basic.find('appName').text
+            appName = lists[2]
             subSystems = root.find('subSystems')
             systems = subSystems.findall('system')
             for i in range(0, len(systems)):
@@ -117,13 +138,15 @@ def xml2excel(xml_path=None, excel_path=None):
                         one["节点id"] = sys.attrib['id']
                         one["参数"] = fields[j].attrib.get('name')
                         one["参数说明"] = fields[j].attrib.get('label')
-                        date.append(one)
+                        # one["参数类型"]
+                        params.append(one)
         # print (date)
-        df = DataFrame(columns=('一级类型', '二级类型', '应用名称', '节点id', '参数', '参数说明', '参数值'))  # 生成空的pandas表
+        df = DataFrame(
+            columns=('一级类型', '二级类型', '应用名称', '节点id', '参数', '参数说明', '参数值', '参数类型', '参数覆盖', '参数新增时间'))  # 生成空的pandas表
         sheet_name = '参数配置表'
         try:
-            for k in range(0, len(date)):
-                var = date[k]
+            for k in range(0, len(params)):
+                var = params[k]
                 s = []
                 s.append(var['一级类型'])
                 s.append(var['二级类型'])
@@ -151,7 +174,7 @@ def xml2excel(xml_path=None, excel_path=None):
         return False
 
 
-def deal_zip(zip=None, zip_name='', excel_path=None):
+def deal_zip(zip=None, zip_name='', excel_path=None, lists={}):
     re = False
     if zip == None or excel_path == None:
         print('excel路径错误，本次跳过……')
@@ -161,7 +184,7 @@ def deal_zip(zip=None, zip_name='', excel_path=None):
     if len(contains) > 0:
         print('当前压缩文件【{}】存在deploy.xml，提取文件。'.format(zip_name))
         xml = zip.extract(contains[0], path=None, pwd=None)
-        re = xml2excel(xml, excel_path)
+        re = xml2excel(xml, excel_path, lists)
         os.remove(xml)
         print('当前压缩文件【{}】处理完成！\n'.format(zip_name))
     else:
@@ -174,7 +197,7 @@ def deal_zip(zip=None, zip_name='', excel_path=None):
                 contains1 = [x for i, x in enumerate(sdkzip.namelist()) if x.find('deploy.xml') != -1]
                 if len(contains1) > 0:
                     xml = sdkzip.extract(contains1[0], path=None, pwd=None)
-                    re = xml2excel(xml, excel_path)
+                    re = xml2excel(xml, excel_path, lists)
                     os.remove(xml)
                     print('当前压缩文件【{}】处理完成！\n'.format(zip_name))
                 else:
@@ -189,34 +212,34 @@ def deal_zip(zip=None, zip_name='', excel_path=None):
     return re
 
 
-def main(dirss, excel_path):
+def main(excel_path):
     succ = []
     fail = []
-    print('开始读取目录：【' + dirss + '】下的压缩文件')
     success_count = 0
     fail_count = 0
-    for (root, dirs, files) in os.walk(dirss):
-        for f in files:
-            curpath = os.path.join(root, f)
-            if str(f).endswith('.zip'):
-                print('【' + curpath + '】')
-                try:
-                    z = zipfile.ZipFile(curpath, "r")
-                    result = deal_zip(z, curpath, excel_path)
-                    if result:
-                        success_count = success_count + 1
-                        succ.append(curpath)
-                    else:
-                        fail_count = fail_count + 1
-                        fail.append(curpath)
 
-                except Exception as e:
-                    fail_count = fail_count + 1
-                    fail.append(curpath)
-                    print('Error:' + str(e.args))
-                    print('文件：【' + curpath + '】读取失败，本次跳过……')
-                    continue
-    print('读取目录：【' + dirss + '】及其子目录下的所有压缩文件结束……')
+    map = get_map(excel_path)
+
+    for f in map:
+        curpath = map[f][4]
+        print(f, ':', '【' + curpath + '】')
+        try:
+            z = zipfile.ZipFile(curpath, "r")
+            result = deal_zip(z, curpath, excel_path, map[f])
+            if result:
+                success_count = success_count + 1
+                succ.append(curpath)
+            else:
+                fail_count = fail_count + 1
+                fail.append(curpath)
+
+        except Exception as e:
+            fail_count = fail_count + 1
+            fail.append(curpath)
+            print('Error:' + str(e.args))
+            print('文件：【' + curpath + '】读取失败，本次跳过……')
+            continue
+
     print('本次处理压缩文件成功：【{}】个，失败【{}】个'.format(success_count, fail_count))
     print('success: ')
     for s in succ:
@@ -264,6 +287,6 @@ if __name__ == '__main__':
             continue
 
     print('---start---')
-    main(conf.get('dir'), conf.get('excel_path'))
+    main(conf.get('excel_path'))
     print('---end---')
     skip = input()
