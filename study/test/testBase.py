@@ -3,7 +3,7 @@
 """
 
 import difflib
-
+import time
 
 
 def findstrinfile(filename, lookup):
@@ -51,4 +51,8 @@ print('\033[1;30;41m' + 'black' + '\033[0m')
 
 # 白底黑字
 print('\033[1;30;47m' + 'white' + '\033[0m')
+time1 = time.time()
+
+print(int(time1))
+
 
