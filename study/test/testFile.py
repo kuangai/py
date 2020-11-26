@@ -20,4 +20,4 @@ def oop_files(path = "../util"):
         for d in dirs:
             print(os.path.join(root, d))
 
-oop_files()
+oop_files("E:\O4.5202003.00.000-20201115-Beta\IPS")

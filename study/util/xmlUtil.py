@@ -54,8 +54,13 @@ def read_xml(xml_path='./deploy.xml'):
         secondaryType = basic.find('secondaryType').text
         appName = basic.find('appName').text
         subSystems = root.find('subSystems')
-        # systems = subSystems.findall('system')
+        systems = subSystems.findall('system')
 
+        for sys in systems:
+            databases = sys.find('databases')
+            for database in databases:
+                database
+                print('database:', database.attrib.items())
 
         re = r_find_all(globalConfig,'field','grid')
 
@@ -67,6 +72,7 @@ def read_xml(xml_path='./deploy.xml'):
         globalConfig = root.find('globalConfig')
         variables = globalConfig.find('variables')
         res = variables.findall('field')
+
         print(res)
     print("this time xml2excel execute is fine")
 

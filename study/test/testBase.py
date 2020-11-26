@@ -30,29 +30,19 @@ list1 = ['qqaabb', 'wweerr', '121', 'qbcqsd', 'plqs']
 data = [x for i, x in enumerate(list1) if x.find('qs') != -1]
 print(data)  # 返回值为：['qbcqsd','plqs']
 
-list = [1, 2, 3, 4]
-list.append(50)
-print(list)
-a = list.pop(0)
-print(a)
-print(list)
-
 # 绿色字体
 print('\033[1;32m' + 'green' + '\033[0m')
 
-# 蓝色字体
-print('\033[1;34m' + 'blue' + '\033[0m')
-
-# 黄字下划线
-
-
-# 红底黑字
-print('\033[1;30;41m' + 'black' + '\033[0m')
-
-# 白底黑字
-print('\033[1;30;47m' + 'white' + '\033[0m')
 time1 = time.time()
-
 print(int(time1))
 
+# 异常
+try:
+  print(2/0)
+except Exception as e:
+  print(e)
+  print(e.__traceback__.tb_frame.f_globals["__file__"])  # 发生异常所在的文件
+  print(e.__traceback__.tb_lineno)            # 发生异常所在的行数
+
+print(input('Y/N?'))
 

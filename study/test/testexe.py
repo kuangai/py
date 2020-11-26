@@ -5,8 +5,90 @@ import time
 import xml.etree.ElementTree as ET
 import zipfile
 import pandas as pd
+import openpyxl as xl
 from openpyxl import load_workbook
 from pandas import DataFrame
+
+pd.set_option('display.max_rows', 500)
+pd.set_option('display.max_columns', 500)
+pd.set_option('display.width', 1000)
+
+
+def deal_database_param(databases=None, params=None, systemType=None, appType=None, appName=None, nodeId=None):
+    if databases is None or params is None:
+        return
+    if databases is not None:
+        database_list = databases.findall("database")
+        if database_list is not None and len(database_list) > 0:
+            for database in database_list:
+                if database.attrib.get("id") is not None:
+                    auth = database.find("auth")
+                    if auth is not None:
+                        user = auth.attrib.get("user")
+                        if user is None:
+                            user = ""
+                        one = {}
+                        one['参数值'] = "user#" + user
+                        one["一级类型"] = systemType
+                        one["二级类型"] = appType
+                        one["应用名称"] = appName
+                        one["节点id"] = nodeId
+                        one["参数"] = "database|" + database.attrib.get("id") + ":" + "auth"
+                        one["参数说明"] = "id为【"+ database.attrib.get("id") +"】的数据库user"
+                        params.append(one)
+
+                        password = auth.attrib.get("password")
+                        if password is None:
+                            password = ""
+                        one = {}
+                        one['参数值'] = "password#" + password
+                        one["一级类型"] = systemType
+                        one["二级类型"] = appType
+                        one["应用名称"] = appName
+                        one["节点id"] = nodeId
+                        one["参数"] = "database|" + database.attrib.get("id") + ":" + "auth"
+                        one["参数说明"] = "id为【"+ database.attrib.get("id") +"】的数据库密码"
+                        params.append(one)
+
+                    type = database.attrib.get("type")
+                    if type is None:
+                        type = "mysql"
+                    one = {}
+                    one['参数值'] = type
+                    one["一级类型"] = systemType
+                    one["二级类型"] = appType
+                    one["应用名称"] = appName
+                    one["节点id"] = nodeId
+                    one["参数"] = "database|" + database.attrib.get("id") + ":" + "type"
+                    one["参数说明"] = "id为【"+ database.attrib.get("id") +"】的数据库类型"
+                    params.append(one)
+
+                    enable = database.attrib.get("enable")
+                    if enable is None:
+                        enable = "true"
+                    one = {}
+                    one['参数值'] = enable
+                    one["一级类型"] = systemType
+                    one["二级类型"] = appType
+                    one["应用名称"] = appName
+                    one["节点id"] = nodeId
+                    one["参数"] = "database|" + database.attrib.get("id") + ":" + "enable"
+                    one["参数说明"] = "id为【"+ database.attrib.get("id") +"】的数据库是否启用"
+                    params.append(one)
+
+                    backup = database.attrib.get("backup")
+                    if backup is None:
+                        backup = "true"
+                    one = {}
+                    one['参数值'] = backup
+                    one["一级类型"] = systemType
+                    one["二级类型"] = appType
+                    one["应用名称"] = appName
+                    one["节点id"] = nodeId
+                    one["参数"] = "database|" + database.attrib.get("id") + ":" + "backup"
+                    one["参数说明"] = "id为【"+ database.attrib.get("id") +"】的数据库是否备份"
+                    params.append(one)
+
 
 
 def excel2map(path='D:\\test\\test.xlsx', sheet_name='Sheet1', k_col_index=3, v_col_index=4):
@@ -41,6 +123,7 @@ def hidden_sheet(path='D:\\test\\test.xlsx', sheet_name='方案名称'):
         sheet = workbook[sheet_name]  # 打开要编辑的工作表
         sheet.sheet_state = 'hidden'
     workbook.save(path)
+    workbook.close()
 
 
 def write_excel_node(path, sheet_name, listmap=[]):
@@ -52,55 +135,84 @@ def write_excel_node(path, sheet_name, listmap=[]):
         for j in range(0, len(listmap)):  # value.shape[1]获得列数
             sheet.cell(row=1, column=j + 6, value=listmap[j]['node'])
             sheet.cell(row=2, column=j + 6, value=listmap[j]['user'])
-            sheet.cell(row=3, column=j + 6, value=listmap[j]['selected'])
+            #  sheet.cell(row=3, column=j + 6, value=listmap[j]['selected'])
         workbook.save(path)
         workbook.close()
         print('方案名称 sheet 写入成功……')
         return True
     except Exception as e:
-        print('方案名称 sheet 写入失败……', e.args)
+        print('Error 方案名称 sheet 写入失败……', e.args, e.__traceback__.tb_lineno, e.__traceback__.tb_next.tb_frame.__repr__())
         if e.args.__contains__('Permission denied'):
             print("Error: 【请关闭待写入的excel】")
         return False
 
 
-def deal_grid_params(xml,excel_path,col,grid):
-    col = []
+def deal_grid_params(excel_path=None, grid_tag=None, sheet_name=None):
+    """
+    grid参数生成sheet
+    :param sheet_name:
+    :param excel_path:
+    :param grid_tag: grid标签对象
+    :return: 处理结果 True or False
+    """
+    if excel_path is None or grid_tag is None or sheet_name is None:
+        return False
 
-    packagegrid = DataFrame(columns= col  )  # 生成空的pandas表
+    grid_name = grid_tag.attrib.get('label')
+    if grid_name is None:
+        grid_name = grid_tag.attrib.get('name')
+    fields = grid_tag.findall('field')
+    if len(fields) == 0:
+        print('grid：【{}】 缺少field字段,请检查deploy.xml，本次不再处理……'.format(grid_name))
+        return False
+
+    col = []
+    for field in fields:
+        col.append(field.attrib.get('name'))
+    grid_df = DataFrame(columns=tuple(col))  # 生成空的pandas表
+
+    data_str = grid_tag.text
+    print("grid内容如下：")
+    print(data_str.strip())
+    print("grid标签如下：")
+    for field in fields:
+        print(field.attrib.get("name"))
+    if data_str is None or data_str.strip() == '':
+        tmp = []
+        for field in fields:
+            tmp.append(field.text.strip())
+        grid_df.loc[0] = tmp
+    else:
+        tmp_arr = data_str.strip().split(';')
+        if len(tmp_arr) == 0:
+            return
+        for k in range(0, len(tmp_arr)):
+            if (len(tmp_arr[k].split(',')) == len(fields)):
+                grid_df.loc[k] = tmp_arr[k].split(',')
+    print(grid_name + '  参数如下：')
+    print(grid_df)
 
     try:
         writer = pd.ExcelWriter(excel_path, engine='openpyxl', mode='a')  # 用于首次写入还可自动加表头
         workbook = load_workbook(excel_path)  # 打开要写入数据的工作簿
         writer.book = workbook
 
-        for k in range(0, len(packagelist)):
-            var = packagelist[k]
-            s = []
-            s.append(var['部署包类型'])
-            s.append(var['一级类型'])
-            s.append(var['二级类型'])
-            s.append(var['应用名称'])
-            s.append(var['安装顺序'])
-            s.append(var['部署包名称'])
-            s.append(var['最低兼容版本'])
-            s.append(var['最高兼容版本'])
-            packagedf.loc[k] = s
-
         if sheet_name in workbook.sheetnames:
             workbook.remove(workbook[sheet_name])
 
-        packagedf.to_excel(writer, sheet_name=sheet_name, index=False, header=True)
+        grid_df.to_excel(writer, sheet_name=sheet_name, index=False, header=True)
         writer.save()
         workbook.close()
-        print("写入安装包列表sheet写入成功……")
+        print(grid_name, " grid sheet写入成功……")
+        print('\n')
         return True
     except Exception as e:
-        print("写入安装包列表sheet写入失败……", e.args)
+        print("Error" + grid_name + " grid sheet写入失败……", e.args, e.__traceback__.tb_lineno,
+              e.__traceback__.tb_next.tb_frame.__repr__())
         if e.args.__contains__('Permission denied'):
             print("Error: 【请关闭待写入的excel】")
+            print('\n')
         return False
-    return []
 
 
 def write_excel_append(path, sheet_name, dateframe=None):
@@ -137,7 +249,8 @@ def write_excel_append(path, sheet_name, dateframe=None):
         workbook.close()
         return True
     except Exception as e:
-        print("参数配置表sheet 写入失败…… ", e.args)
+        print("Error 参数配置表sheet 写入失败…… ", e.args, e.__traceback__.tb_lineno,
+              e.__traceback__.tb_next.tb_frame.__repr__())
         if e.args.__contains__('Permission denied'):
             print("Error: 【请关闭待写入的excel】")
         return False
@@ -197,10 +310,11 @@ def write_excel_package(excel_path=None, sheet_name="安装包列表", packageli
         packagedf.to_excel(writer, sheet_name=sheet_name, index=False, header=True)
         writer.save()
         workbook.close()
-        print("写入安装包列表sheet写入成功……")
+        print("安装包列表 sheet写入成功……")
         return True
     except Exception as e:
-        print("写入安装包列表sheet写入失败……", e.args)
+        print("Error 安装包列表sheet写入失败……", e.args, e.__traceback__.tb_lineno,
+              e.__traceback__.tb_next.tb_frame.__repr__())
         if e.args.__contains__('Permission denied'):
             print("Error: 【请关闭待写入的excel】")
         return False
@@ -211,12 +325,12 @@ def xml2excel(xml_path=None, excel_path=None, lists={}, nodemaplist=[], packagel
     xml数据以追加的方式转存excel
     :param xml_path:
     :param excel_path:
-    :param lists: 从上层穿过来的部分参数，（excel生成方案文档配置页 的数据）
+    :param lists: 从上层穿过来的部分参数，（excel部署包配置页 的数据）
     :param packagelist 每次解析时补充安装的信息到列表，用于最后生成 安装包列表sheet
     :param nodemaplist 每次解析时补充节点的信息到列表，用于最后补入 方案名称sheet
     :return: 处理结果
     """
-    support_param_types = ['input', 'select', 'timestamp', 'switch']
+    support_param_types = ['input', 'select', 'timestamp', 'switch', 'complexSelect']
     try:
         if xml_path == None or excel_path == None:
             return
@@ -243,48 +357,94 @@ def xml2excel(xml_path=None, excel_path=None, lists={}, nodemaplist=[], packagel
             packagemap["最高兼容版本"] = version.text
             packagelist.append(packagemap)
 
+            # 全局参数
+            global_config = root.find('globalConfig')
+
+            # 数据库参数
+            databases = global_config.find('databases')
+            deal_database_param(databases, params, systemType, appType, appName, "")
+
+            # 常规参数
+            global_variables = global_config.find('variables')
+            if global_variables is not None:
+                # grid
+                global_grid_fields = r_find_all(global_variables, target='field', type='grid')
+                if len(global_grid_fields) > 0:
+                    print(appName, ' 全局参数中对应的grid类型参数共【{}】个'.format(len(global_grid_fields)))
+                    for grid in global_grid_fields:
+                        sheet_name = grid.attrib.get('name') + grid.attrib.get('label')
+                        grid_param = {'参数值': "grid：" + sheet_name, "一级类型": systemType, "二级类型": appType, "应用名称": appName,
+                                      "节点id": '', "参数": grid.attrib.get('name'),
+                                      "参数说明": grid.attrib.get('label')}
+                        params.append(grid_param)
+                        deal_grid_params(excel_path, grid, sheet_name)
+                # 常规参数
+                fields = global_variables.findall('field')
+                for field in fields:
+                    if field.text is not None \
+                            and field.attrib.get('type') is not None \
+                            and support_param_types.__contains__(field.attrib.get('type')):
+                        one = {}
+                        one['参数值'] = field.text
+                        one["一级类型"] = systemType
+                        one["二级类型"] = appType
+                        one["应用名称"] = appName
+                        one["节点id"] = ''
+                        one["参数"] = field.attrib.get('name')
+                        one["参数说明"] = field.attrib.get('label')
+                        params.append(one)
+
+            # 节点参数
             subSystems = root.find('subSystems')
             systems = subSystems.findall('system')
             for i in range(0, len(systems)):
                 sys = systems[i]
-                if sys == None:
+                if sys is None:
                     continue
                 nodemap = {}
 
                 # 收集方案名称sheet需要的参数
                 nodemap['user'] = sys.attrib['id']  # todo 用户
                 nodemap['node'] = sys.attrib['id']
-                nodemap['selected'] = '√'
+                # nodemap['selected'] = '√'
                 nodemaplist.append(nodemap)
 
+                # 数据库参数
+                databases = sys.find('databases')
+                deal_database_param(databases, params, systemType, appType, appName, "")
 
+                # 常规参数
                 variables = sys.find('variables')
-                if variables == None:
+                if variables is None:
                     continue
 
                 # 单独处理grid参数，由于grid参数标签层级不固定，因此类似递归查询，每个grid单独生成新的sheet页
                 grid_fields = r_find_all(sys, target='field', type='grid')
-                print('当前节点【{}】对应的grid类型参数共【{}】个', sys.attrib['id'], len(grid_fields))
-                for grid in grid_fields:
-                    sheetname = grid.attrib.get('name') + grid.attrib.get('label')
-                    gridparam = {}
-                    gridparam['参数值'] = "grid：" + sheetname
-                    gridparam["一级类型"] = systemType
-                    gridparam["二级类型"] = appType
-                    gridparam["应用名称"] = appName
-                    gridparam["节点id"] = sys.attrib['id']
-                    gridparam["参数"] = field.attrib.get('name')
-                    gridparam["参数说明"] = field.attrib.get('label')
+                if len(grid_fields) > 0:
+                    print(appName, ' 当前节点【{}】对应的grid类型参数共【{}】个'.format(sys.attrib['id'], len(grid_fields)))
+                    for grid in grid_fields:
+                        sheet_name = grid.attrib.get('name') + grid.attrib.get('label')
+                        grid_param = {'参数值': "grid：" + sheet_name, "一级类型": systemType, "二级类型": appType, "应用名称": appName,
+                                      "节点id": sys.attrib['id'], "参数": grid.attrib.get('name'),
+                                      "参数说明": grid.attrib.get('label')}
+                        params.append(grid_param)
+                        deal_grid_params(excel_path, grid, sheet_name)
+
+                # 私有节点参数
+                # 复杂单选框 组装函数
+                # 数据库节点
 
                 fields = variables.findall('field')
-
                 for field in fields:
 
-                    if field.text != None \
+                    if field.text is not None \
                             and field.attrib.get('type') is not None \
                             and support_param_types.__contains__(field.attrib.get('type')):
                         one = {}
-                        one['参数值'] = field.text
+                        param_val = field.text
+                        if param_val is None or param_val.strip() == '':
+                            param_val = field.attrib.get('default')
+                        one['参数值'] = param_val
                         one["一级类型"] = systemType
                         one["二级类型"] = appType
                         one["应用名称"] = appName
@@ -315,7 +475,7 @@ def xml2excel(xml_path=None, excel_path=None, lists={}, nodemaplist=[], packagel
                 s.append("")
                 s.append("")
                 paramsdf.loc[k] = s
-            print('本次读取参数如下：')
+            print('本次读取常规参数如下：')
             print(paramsdf)
             print("开始写入参数配置表 sheet……")
             re = write_excel_append(excel_path, sheet_name, paramsdf)
@@ -325,7 +485,8 @@ def xml2excel(xml_path=None, excel_path=None, lists={}, nodemaplist=[], packagel
                 print("写入参数配置表 sheet失败……")
 
         except Exception as e:
-            print("写入参数配置表 sheet失败……", e.args)
+            print("Error 写入参数配置表 sheet失败……", e.args, e.__traceback__.tb_lineno,
+                  e.__traceback__.tb_next.tb_frame.__repr__())
             if e.args.__contains__('Permission denied'):
                 print("Error: 【请关闭待写入的excel】")
             return False
@@ -333,7 +494,7 @@ def xml2excel(xml_path=None, excel_path=None, lists={}, nodemaplist=[], packagel
         print("this time xml2excel execute is fine")
         return re
     except Exception as e:
-        print('解析xml出错了……', e.args)
+        print('Error 解析xml出错了……', e.args, e.__traceback__.tb_lineno, e.__traceback__.tb_next.tb_frame.__repr__())
         return False
 
 
@@ -375,6 +536,95 @@ def deal_zip(zip=None, zip_name='', excel_path=None, lists={}, nodemaplist=[], p
     return re
 
 
+# sheet页复制，未包含样式复制
+def copySheet(old_sheet_name="全局变量配置页", new_sheet_name="全局变量配置页copy", path="F:\\test\\test.xlsx"):
+    workbook = load_workbook(path)
+    old_sheet = workbook[old_sheet_name]
+    if new_sheet_name in workbook.sheetnames:
+        workbook.remove(workbook[new_sheet_name])
+    new_sheet = workbook.create_sheet(new_sheet_name)
+    for row in old_sheet:
+        for cell in row:
+            new_sheet[cell.coordinate].value = cell.value
+    workbook.save(path)
+    workbook.close()
+
+
+def create_global_var_sheet(path="F:\\test\\test.xlsx"):
+    try:
+        copySheet("全局变量配置页", "全局参数", path)
+        hidden_sheet(path, "全局变量配置页")
+        print("复制全局变量sheet页成功……")
+    except:
+        print("复制全局变量sheet页失败……")
+
+
+# 将sheet页中的其中几列作为key（k_col_indexs控制列号集合），整行作为value
+def sheet2map(path='F:\\test\\test.xlsx', sheet_name='参数配置表', k_col_indexs=[]):
+    map = {}
+    workbook = load_workbook(path)
+    worksheet = workbook[sheet_name]
+    if len(k_col_indexs) == 0:
+        # 默认参数配置页的3、4、5列，对应应用名称、节点id、参数
+        k_col_indexs = [3, 4, 5]
+
+    for i in range(1, worksheet.max_row):
+        key = ""
+        for k_col_index in k_col_indexs:
+            key = key + "#" + str(worksheet.cell(row=i + 1, column=k_col_index).value)
+        val = []
+        tmpi = 1
+        for item in list(worksheet.rows)[i]:
+            if tmpi > 10:
+                break
+            val.append(item.value)
+            tmpi = tmpi + 1
+        if key.startswith('##'):
+            # map[key] = val 不会报错
+            print('\033[4;33m' + '第【{}】行【{}】列为空，已跳过……'.format(i, k_col_indexs[0]) + '\033[0m')
+        else:
+            if val is None:
+                print('\033[4;33m' + '第【{}】行为空'.format(i) + '\033[0m')
+            map[key] = val
+    print("读取【" + sheet_name + "】sheet页转为json如下：")
+    print(map)
+    return map
+
+
+def modify_parameter_config(path="F:\\test\\test.xlsx"):
+    update_map = sheet2map(path, "默认参数配置页", [3, 4, 5])
+    if update_map is None or len(update_map.keys()) == 0:
+        return
+    target_map = sheet2map(path, "参数配置表", [3, 4, 5])
+    params = {}
+    for update_key in update_map.keys():
+        target_map[update_key] = update_map[update_key]
+
+    paramsdf = DataFrame(
+        columns=('一级类型', '二级类型', '应用名称', '节点id', '参数', '参数说明', '参数值', '参数类型', '参数覆盖', '参数新增时间'))  # 生成空的pandas表
+    sheet_name = '参数配置表'
+    for k in range(0, len(target_map)):
+        paramsdf.loc[k] = list(target_map.values())[k]
+
+    print('\033[4;33m' + '本次生成所有参数如下：' + '\033[0m')
+    print('\033[4;33m' + paramsdf + '\033[0m')
+
+    print("开始写入参数配置表 sheet……")
+
+    workbook = load_workbook(path)
+    if sheet_name in workbook.sheetnames:
+        workbook.remove(workbook[sheet_name])
+        workbook.save(path)
+        workbook.close()
+
+    re = write_excel_append(path, sheet_name, paramsdf)
+    hidden_sheet(path, "默认参数配置页")
+    if re:
+        print("根据'默认参数配置页'修改'参数配置表'成功……")
+    else:
+        print("根据'默认参数配置页'修改'参数配置表'失败……")
+
+
 def main(excel_path):
     succ = []
     fail = []
@@ -382,7 +632,7 @@ def main(excel_path):
     fail_count = 0
     nodemaplist = []
     packagelist = []
-    map = excel2map(excel_path, "生成方案文档配置页")
+    map = excel2map(excel_path, "部署包配置页")
     checks = []
     for f in map:
         ppath = map[f][4]
@@ -394,6 +644,13 @@ def main(excel_path):
         print('以下安装包路径填写错误，请检查……')
         print(checks)
         return False
+
+    sheet_name = "参数配置表"
+    workbook = load_workbook(excel_path)
+    if sheet_name in workbook.sheetnames:
+        workbook.remove(workbook[sheet_name])
+        workbook.save(excel_path)
+        workbook.close()
 
     for f in map:
         curpath = map[f][4]
@@ -411,7 +668,7 @@ def main(excel_path):
         except Exception as e:
             fail_count = fail_count + 1
             fail.append(curpath)
-            print('Error:' + str(e.args))
+            print('Error:', str(e.args, e.__traceback__.tb_lineno, e.__traceback__.tb_next.tb_frame.__repr__()))
             print('文件：【' + curpath + '】读取失败，本次跳过……')
             continue
 
@@ -420,6 +677,8 @@ def main(excel_path):
 
     write_excel_node(excel_path, "方案名称", nodemaplist)
     write_excel_package(excel_path, "安装包列表", packagelist)
+    create_global_var_sheet(excel_path)
+    modify_parameter_config(excel_path)
 
     print('本次处理压缩文件成功：【{}】个，失败【{}】个'.format(success_count, fail_count))
     print('success: ')
@@ -430,13 +689,14 @@ def main(excel_path):
     for s in fail:
         print(s)
 
+    hidden_sheet(excel_path, '部署包配置页')
+
 
 def load_conf(path='./conf/conf.ini'):
     print('正在加载配置文件……')
     config = configparser.ConfigParser()
     try:
         config.read(filenames=path, encoding='utf-8')  # 搞不定就换 utf-8-sig
-        print("安装包路径：【{}】".format(config.get("path", "dir")))
         print("excel路径：【{}】".format(config.get("path", "excel_path")))
     except:
         print('加载失败，请检查配置文件conf/conf.ini……')
@@ -445,7 +705,7 @@ def load_conf(path='./conf/conf.ini'):
             print(str(3 - i) + '……')
             time.sleep(1)
         sys.exit('end……')
-    return {'dir': config.get("path", "dir"), 'excel_path': config.get("path", "excel_path")}
+    return {'excel_path': config.get("path", "excel_path")}
 
 
 if __name__ == '__main__':
@@ -466,4 +726,4 @@ if __name__ == '__main__':
     main(conf.get('excel_path'))
     time2 = time.time()
     print('---end---spent time: ' + str(int(time2 - time1)) + 's')
-    skip = input()
+    print(input('enter键结束……'))
