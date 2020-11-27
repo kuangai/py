@@ -5,7 +5,6 @@ import time
 import xml.etree.ElementTree as ET
 import zipfile
 import pandas as pd
-import openpyxl as xl
 from openpyxl import load_workbook
 from pandas import DataFrame
 

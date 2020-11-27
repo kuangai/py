@@ -8,6 +8,83 @@ import pandas as pd
 from openpyxl import load_workbook
 from pandas import DataFrame
 
+def deal_database_param(databases=None, params=None, systemType=None, appType=None, appName=None, nodeId=None):
+    if databases is None or params is None:
+        return
+    if databases is not None:
+        database_list = databases.findall("database")
+        if database_list is not None and len(database_list) > 0:
+            for database in database_list:
+                if database.attrib.get("id") is not None:
+                    auth = database.find("auth")
+                    if auth is not None:
+                        user = auth.attrib.get("user")
+                        if user is None:
+                            user = ""
+                        one = {}
+                        one['参数值'] = "user#" + user
+                        one["一级类型"] = systemType
+                        one["二级类型"] = appType
+                        one["应用名称"] = appName
+                        one["节点id"] = nodeId
+                        one["参数"] = "database|" + database.attrib.get("id") + ":" + "auth"
+                        one["参数说明"] = "id为【"+ database.attrib.get("id") +"】的数据库user"
+                        params.append(one)
+
+                        password = auth.attrib.get("password")
+                        if password is None:
+                            password = ""
+                        one = {}
+                        one['参数值'] = "password#" + password
+                        one["一级类型"] = systemType
+                        one["二级类型"] = appType
+                        one["应用名称"] = appName
+                        one["节点id"] = nodeId
+                        one["参数"] = "database|" + database.attrib.get("id") + ":" + "auth"
+                        one["参数说明"] = "id为【"+ database.attrib.get("id") +"】的数据库密码"
+                        params.append(one)
+
+                    type = database.attrib.get("type")
+                    if type is None:
+                        type = "mysql"
+                    one = {}
+                    one['参数值'] = type
+                    one["一级类型"] = systemType
+                    one["二级类型"] = appType
+                    one["应用名称"] = appName
+                    one["节点id"] = nodeId
+                    one["参数"] = "database|" + database.attrib.get("id") + ":" + "type"
+                    one["参数说明"] = "id为【"+ database.attrib.get("id") +"】的数据库类型"
+                    params.append(one)
+
+                    enable = database.attrib.get("enable")
+                    if enable is None:
+                        enable = "true"
+                    one = {}
+                    one['参数值'] = enable
+                    one["一级类型"] = systemType
+                    one["二级类型"] = appType
+                    one["应用名称"] = appName
+                    one["节点id"] = nodeId
+                    one["参数"] = "database|" + database.attrib.get("id") + ":" + "enable"
+                    one["参数说明"] = "id为【"+ database.attrib.get("id") +"】的数据库是否启用"
+                    params.append(one)
+
+                    backup = database.attrib.get("backup")
+                    if backup is None:
+                        backup = "true"
+                    one = {}
+                    one['参数值'] = backup
+                    one["一级类型"] = systemType
+                    one["二级类型"] = appType
+                    one["应用名称"] = appName
+                    one["节点id"] = nodeId
+                    one["参数"] = "database|" + database.attrib.get("id") + ":" + "backup"
+                    one["参数说明"] = "id为【"+ database.attrib.get("id") +"】的数据库是否备份"
+                    params.append(one)
+
+
+
 
 def write_excel_append(path, sheet_name, dateframe=None):
     # 参数说明: [变量顺序可改变，依次是：sheet页对象，要写入的dataframe对象，从哪一行开始写入]
@@ -97,11 +174,22 @@ def xml2excel(xml_path=None, excel_path=None):
 
             appName = basic.find('appName').text
             subSystems = root.find('subSystems')
+
+            # 全局参数
+            global_config = root.find('globalConfig')
+
+            # 数据库参数
+            databases = global_config.find('databases')
+            deal_database_param(databases, date, systemType, appType, appName, "")
+
             systems = subSystems.findall('system')
             for i in range(0, len(systems)):
                 sys = systems[i]
                 if sys == None:
                     continue
+                # 数据库参数
+                databases = sys.find('databases')
+                deal_database_param(databases, date, systemType, appType, appName, sys.attrib['id'])
                 variables = sys.find('variables')
                 if variables == None:
                     continue
