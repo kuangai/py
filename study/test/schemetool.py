@@ -7,7 +7,7 @@ import zipfile
 import pandas as pd
 from openpyxl import load_workbook
 from pandas import DataFrame
-
+import shutil
 pd.set_option('display.max_rows', 500)
 pd.set_option('display.max_columns', 500)
 pd.set_option('display.width', 1000)
@@ -33,7 +33,9 @@ def deal_database_param(databases=None, params=None, systemType=None, appType=No
                         one["应用名称"] = appName
                         one["节点id"] = nodeId
                         one["参数"] = "database|" + database.attrib.get("id") + ":" + "auth"
-                        one["参数说明"] = "id为【"+ database.attrib.get("id") +"】的数据库user"
+                        one["参数说明"] = "id为【" + database.attrib.get("id") + "】的数据库user"
+                        one["参数类型"] = "数据库"
+                        one["参数新增时间"] = ''
                         params.append(one)
 
                         password = auth.attrib.get("password")
@@ -46,7 +48,9 @@ def deal_database_param(databases=None, params=None, systemType=None, appType=No
                         one["应用名称"] = appName
                         one["节点id"] = nodeId
                         one["参数"] = "database|" + database.attrib.get("id") + ":" + "auth"
-                        one["参数说明"] = "id为【"+ database.attrib.get("id") +"】的数据库密码"
+                        one["参数说明"] = "id为【" + database.attrib.get("id") + "】的数据库密码"
+                        one["参数类型"] = "数据库"
+                        one["参数新增时间"] = ''
                         params.append(one)
 
                     type = database.attrib.get("type")
@@ -59,7 +63,9 @@ def deal_database_param(databases=None, params=None, systemType=None, appType=No
                     one["应用名称"] = appName
                     one["节点id"] = nodeId
                     one["参数"] = "database|" + database.attrib.get("id") + ":" + "type"
-                    one["参数说明"] = "id为【"+ database.attrib.get("id") +"】的数据库类型"
+                    one["参数说明"] = "id为【" + database.attrib.get("id") + "】的数据库类型"
+                    one["参数类型"] = "数据库"
+                    one["参数新增时间"] = ''
                     params.append(one)
 
                     enable = database.attrib.get("enable")
@@ -72,7 +78,9 @@ def deal_database_param(databases=None, params=None, systemType=None, appType=No
                     one["应用名称"] = appName
                     one["节点id"] = nodeId
                     one["参数"] = "database|" + database.attrib.get("id") + ":" + "enable"
-                    one["参数说明"] = "id为【"+ database.attrib.get("id") +"】的数据库是否启用"
+                    one["参数说明"] = "id为【" + database.attrib.get("id") + "】的数据库是否启用"
+                    one["参数类型"] = "数据库"
+                    one["参数新增时间"] = ''
                     params.append(one)
 
                     backup = database.attrib.get("backup")
@@ -85,9 +93,24 @@ def deal_database_param(databases=None, params=None, systemType=None, appType=No
                     one["应用名称"] = appName
                     one["节点id"] = nodeId
                     one["参数"] = "database|" + database.attrib.get("id") + ":" + "backup"
-                    one["参数说明"] = "id为【"+ database.attrib.get("id") +"】的数据库是否备份"
+                    one["参数说明"] = "id为【" + database.attrib.get("id") + "】的数据库是否备份"
+                    one["参数类型"] = "数据库"
+                    one["参数新增时间"] = ''
                     params.append(one)
 
+                    user = database.attrib.get("user")
+                    if user is not None:
+                        one = {}
+                        one['参数值'] = user
+                        one["一级类型"] = systemType
+                        one["二级类型"] = appType
+                        one["应用名称"] = appName
+                        one["节点id"] = nodeId
+                        one["参数"] = "databases|selectedDatabases|user:" + database.attrib.get("id")
+                        one["参数说明"] = "id为【" + database.attrib.get("id") + "】的数据库user"
+                        one["参数类型"] = "数据库"
+                        one["参数新增时间"] = ''
+                        params.append(one)
 
 
 def excel2map(path='D:\\test\\test.xlsx', sheet_name='Sheet1', k_col_index=3, v_col_index=4):
@@ -132,18 +155,59 @@ def write_excel_node(path, sheet_name, listmap=[]):
         workbook = load_workbook(path)  # 打开要写入数据的工作簿
         sheet = workbook[sheet_name]  # 打开要编辑的工作表
         for j in range(0, len(listmap)):  # value.shape[1]获得列数
-            sheet.cell(row=1, column=j + 6, value=listmap[j]['node'])
-            sheet.cell(row=2, column=j + 6, value=listmap[j]['user'])
+            nodecell = sheet.cell(row=1, column=j + 6)
+            usercell = sheet.cell(row=2, column=j + 6)
+            if usercell is not None and str(usercell) != "":
+                continue
+            if nodecell is None or str(nodecell) == '':
+                break
+            else:
+                for k in range(0, len(listmap)):
+                    if str(nodecell) == listmap[j]['node']:
+                        sheet.cell(row=2, column=j + 6, value=listmap[j]['user'])
+
             #  sheet.cell(row=3, column=j + 6, value=listmap[j]['selected'])
         workbook.save(path)
         workbook.close()
         print('方案名称 sheet 写入成功……')
         return True
     except Exception as e:
-        print('Error 方案名称 sheet 写入失败……', e.args, e.__traceback__.tb_lineno, e.__traceback__.tb_next.tb_frame.__repr__())
+        print('Error 方案名称 sheet 写入失败……', e.args, e.__traceback__.tb_lineno)
         if e.args.__contains__('Permission denied'):
             print("Error: 【请关闭待写入的excel】")
         return False
+
+def deal_node_params(node=None, params=None, systemType=None, appType=None, appName=None, nodeId=None, support_param_types=None):
+    if node is None or nodeId is None:
+        return
+    variables = node.find('variables')
+    if variables is None:
+        return
+    fields = variables.findall('field')
+    for field in fields:
+        if field.text is not None \
+                and field.attrib.get('type') is not None \
+                and support_param_types.__contains__(field.attrib.get('type')):
+            one = {}
+            param_val = field.text
+            if param_val is None or param_val.strip() == '':
+                param_val = field.attrib.get('default')
+            one['参数值'] = param_val
+            one["一级类型"] = systemType
+            one["二级类型"] = appType
+            one["应用名称"] = appName
+            one["节点id"] = nodeId
+            one["参数"] = field.attrib.get('name')
+            one["参数说明"] = field.attrib.get('label')
+            zgfieldtype = field.attrib.get('zgfieldtype')
+            if zgfieldtype is None or str(zgfieldtype) == '':
+                zgfieldtype = "默认"
+            one["参数类型"] = zgfieldtype
+            zgfiledtime = field.attrib.get('zgfiledtime')
+            if zgfiledtime is None:
+                zgfiledtime = ""
+            one["参数新增时间"] = zgfiledtime
+            params.append(one)
 
 
 def deal_grid_params(excel_path=None, grid_tag=None, sheet_name=None):
@@ -206,8 +270,7 @@ def deal_grid_params(excel_path=None, grid_tag=None, sheet_name=None):
         print('\n')
         return True
     except Exception as e:
-        print("Error" + grid_name + " grid sheet写入失败……", e.args, e.__traceback__.tb_lineno,
-              e.__traceback__.tb_next.tb_frame.__repr__())
+        print("Error" + grid_name + " grid sheet写入失败……", e.args, e.__traceback__.tb_lineno)
         if e.args.__contains__('Permission denied'):
             print("Error: 【请关闭待写入的excel】")
             print('\n')
@@ -248,8 +311,7 @@ def write_excel_append(path, sheet_name, dateframe=None):
         workbook.close()
         return True
     except Exception as e:
-        print("Error 参数配置表sheet 写入失败…… ", e.args, e.__traceback__.tb_lineno,
-              e.__traceback__.tb_next.tb_frame.__repr__())
+        print("Error 参数配置表sheet 写入失败…… ", e.args, e.__traceback__.tb_lineno)
         if e.args.__contains__('Permission denied'):
             print("Error: 【请关闭待写入的excel】")
         return False
@@ -312,8 +374,7 @@ def write_excel_package(excel_path=None, sheet_name="安装包列表", packageli
         print("安装包列表 sheet写入成功……")
         return True
     except Exception as e:
-        print("Error 安装包列表sheet写入失败……", e.args, e.__traceback__.tb_lineno,
-              e.__traceback__.tb_next.tb_frame.__repr__())
+        print("Error 安装包列表sheet写入失败……", e.args, e.__traceback__.tb_lineno)
         if e.args.__contains__('Permission denied'):
             print("Error: 【请关闭待写入的excel】")
         return False
@@ -375,6 +436,16 @@ def xml2excel(xml_path=None, excel_path=None, lists={}, nodemaplist=[], packagel
                         grid_param = {'参数值': "grid：" + sheet_name, "一级类型": systemType, "二级类型": appType, "应用名称": appName,
                                       "节点id": '', "参数": grid.attrib.get('name'),
                                       "参数说明": grid.attrib.get('label')}
+
+                        zgfieldtype = grid.attrib.get('zgfieldtype')
+                        if zgfieldtype is None or str(zgfieldtype) == '':
+                            zgfieldtype = "默认"
+                        grid_param["参数类型"] = zgfieldtype
+                        zgfiledtime = grid.attrib.get('zgfiledtime')
+                        if zgfiledtime is None:
+                            zgfiledtime = ""
+                        grid_param["参数新增时间"] = zgfiledtime
+
                         params.append(grid_param)
                         deal_grid_params(excel_path, grid, sheet_name)
                 # 常规参数
@@ -391,6 +462,15 @@ def xml2excel(xml_path=None, excel_path=None, lists={}, nodemaplist=[], packagel
                         one["节点id"] = ''
                         one["参数"] = field.attrib.get('name')
                         one["参数说明"] = field.attrib.get('label')
+
+                        zgfieldtype = field.attrib.get('zgfieldtype')
+                        if zgfieldtype is None or str(zgfieldtype) == '':
+                            zgfieldtype = "默认"
+                        one["参数类型"] = zgfieldtype
+                        zgfiledtime = field.attrib.get('zgfiledtime')
+                        if zgfiledtime is None:
+                            zgfiledtime = ""
+                        one["参数新增时间"] = zgfiledtime
                         params.append(one)
 
             # 节点参数
@@ -403,14 +483,13 @@ def xml2excel(xml_path=None, excel_path=None, lists={}, nodemaplist=[], packagel
                 nodemap = {}
 
                 # 收集方案名称sheet需要的参数
-                nodemap['user'] = sys.attrib['id']  # todo 用户
-                nodemap['node'] = sys.attrib['id']
+                nodemap['user'] = ""  # todo 用户
+                nodemap['node'] = sys.attrib.get('id')
                 # nodemap['selected'] = '√'
-                nodemaplist.append(nodemap)
 
                 # 数据库参数
                 databases = sys.find('databases')
-                deal_database_param(databases, params, systemType, appType, appName, "")
+                deal_database_param(databases, params, systemType, appType, appName, sys.attrib.get('id'))
 
                 # 常规参数
                 variables = sys.find('variables')
@@ -420,21 +499,35 @@ def xml2excel(xml_path=None, excel_path=None, lists={}, nodemaplist=[], packagel
                 # 单独处理grid参数，由于grid参数标签层级不固定，因此类似递归查询，每个grid单独生成新的sheet页
                 grid_fields = r_find_all(sys, target='field', type='grid')
                 if len(grid_fields) > 0:
-                    print(appName, ' 当前节点【{}】对应的grid类型参数共【{}】个'.format(sys.attrib['id'], len(grid_fields)))
+                    print(appName, ' 当前节点【{}】对应的grid类型参数共【{}】个'.format(sys.attrib.get('id'), len(grid_fields)))
                     for grid in grid_fields:
                         sheet_name = grid.attrib.get('name') + grid.attrib.get('label')
                         grid_param = {'参数值': "grid：" + sheet_name, "一级类型": systemType, "二级类型": appType, "应用名称": appName,
-                                      "节点id": sys.attrib['id'], "参数": grid.attrib.get('name'),
+                                      "节点id": sys.attrib.get('id'), "参数": grid.attrib.get('name'),
                                       "参数说明": grid.attrib.get('label')}
+
+                        zgfieldtype = grid.attrib.get('zgfieldtype')
+                        if zgfieldtype is None or str(zgfieldtype) == '':
+                            zgfieldtype = "默认"
+                        grid_param["参数类型"] = zgfieldtype
+                        zgfiledtime = grid.attrib.get('zgfiledtime')
+                        if zgfiledtime is None:
+                            zgfiledtime = ""
+                        grid_param["参数新增时间"] = zgfiledtime
+
                         params.append(grid_param)
                         deal_grid_params(excel_path, grid, sheet_name)
 
                 # 私有节点参数
-                # 复杂单选框 组装函数
-                # 数据库节点
+                node = sys.find('node')
+                if node is not None and sys.attrib.get('id') is not None:
+                    deal_node_params(node,params,systemType,appType,appName,sys.attrib.get('id') ,support_param_types)
 
                 fields = variables.findall('field')
                 for field in fields:
+
+                    if field.attrib.get("name") is not None and field.attrib.get("name") == 'user' and field.text is not None:
+                        nodemap['user'] = field.text
 
                     if field.text is not None \
                             and field.attrib.get('type') is not None \
@@ -447,12 +540,19 @@ def xml2excel(xml_path=None, excel_path=None, lists={}, nodemaplist=[], packagel
                         one["一级类型"] = systemType
                         one["二级类型"] = appType
                         one["应用名称"] = appName
-                        one["节点id"] = sys.attrib['id']
+                        one["节点id"] = sys.attrib.get('id')
                         one["参数"] = field.attrib.get('name')
                         one["参数说明"] = field.attrib.get('label')
-                        # one["参数类型"]
+                        zgfieldtype = field.attrib.get('zgfieldtype')
+                        if zgfieldtype is None or str(zgfieldtype) == '':
+                            zgfieldtype = "默认"
+                        one["参数类型"] = zgfieldtype
+                        zgfiledtime = field.attrib.get('zgfiledtime')
+                        if zgfiledtime is None:
+                            zgfiledtime = ""
+                        one["参数新增时间"] = zgfiledtime
                         params.append(one)
-
+                nodemaplist.append(nodemap)
         # print (date)
         paramsdf = DataFrame(
             columns=('一级类型', '二级类型', '应用名称', '节点id', '参数', '参数说明', '参数值', '参数类型', '参数覆盖', '参数新增时间'))  # 生成空的pandas表
@@ -470,9 +570,9 @@ def xml2excel(xml_path=None, excel_path=None, lists={}, nodemaplist=[], packagel
                 s.append(var['参数'])
                 s.append(var['参数说明'])
                 s.append(var['参数值'])
-                s.append("")  # todo
+                s.append(var['参数类型'])
                 s.append("")
-                s.append("")
+                s.append(var['参数新增时间'])
                 paramsdf.loc[k] = s
             print('本次读取常规参数如下：')
             print(paramsdf)
@@ -484,8 +584,7 @@ def xml2excel(xml_path=None, excel_path=None, lists={}, nodemaplist=[], packagel
                 print("写入参数配置表 sheet失败……")
 
         except Exception as e:
-            print("Error 写入参数配置表 sheet失败……", e.args, e.__traceback__.tb_lineno,
-                  e.__traceback__.tb_next.tb_frame.__repr__())
+            print("Error 写入参数配置表 sheet失败……", e.args, e.__traceback__.tb_lineno)
             if e.args.__contains__('Permission denied'):
                 print("Error: 【请关闭待写入的excel】")
             return False
@@ -493,7 +592,7 @@ def xml2excel(xml_path=None, excel_path=None, lists={}, nodemaplist=[], packagel
         print("this time xml2excel execute is fine")
         return re
     except Exception as e:
-        print('Error 解析xml出错了……', e.args, e.__traceback__.tb_lineno, e.__traceback__.tb_next.tb_frame.__repr__())
+        print('Error 解析xml出错了……', e.args, e.__traceback__.tb_lineno)
         return False
 
 
@@ -559,7 +658,7 @@ def create_global_var_sheet(path="F:\\test\\test.xlsx"):
 
 
 # 将sheet页中的其中几列作为key（k_col_indexs控制列号集合），整行作为value
-def sheet2map(path='F:\\test\\test.xlsx', sheet_name='参数配置表', k_col_indexs=[]):
+def sheet2map(path='F:\\test\\test.xlsx', sheet_name='参数配置表', k_col_indexs=[], isConfig=False):
     map = {}
     workbook = load_workbook(path)
     worksheet = workbook[sheet_name]
@@ -569,6 +668,8 @@ def sheet2map(path='F:\\test\\test.xlsx', sheet_name='参数配置表', k_col_in
 
     for i in range(1, worksheet.max_row):
         key = ""
+        if isConfig and str(worksheet.cell(row=i+1, column=11).value) != "是":
+            continue
         for k_col_index in k_col_indexs:
             key = key + "#" + str(worksheet.cell(row=i + 1, column=k_col_index).value)
         val = []
@@ -591,10 +692,10 @@ def sheet2map(path='F:\\test\\test.xlsx', sheet_name='参数配置表', k_col_in
 
 
 def modify_parameter_config(path="F:\\test\\test.xlsx"):
-    update_map = sheet2map(path, "默认参数配置页", [3, 4, 5])
+    update_map = sheet2map(path, "默认参数配置页", [3, 4, 5], True)
     if update_map is None or len(update_map.keys()) == 0:
         return
-    target_map = sheet2map(path, "参数配置表", [3, 4, 5])
+    target_map = sheet2map(path, "参数配置表", [3, 4, 5], False)
     params = {}
     for update_key in update_map.keys():
         target_map[update_key] = update_map[update_key]
@@ -625,6 +726,18 @@ def modify_parameter_config(path="F:\\test\\test.xlsx"):
 
 
 def main(excel_path):
+    excel_path_arr = excel_path.split(".xlsx")
+    excel_path = excel_path_arr[0] + "-方案.xlsx"
+    old_path = excel_path_arr[0] + ".xlsx"
+    if os.path.exists(excel_path):
+        try:
+            os.remove(excel_path)
+            shutil.copy(old_path, excel_path)
+        except:
+            print("请关闭打开的excel文件后重试……")
+            return
+
+
     succ = []
     fail = []
     success_count = 0
@@ -667,7 +780,7 @@ def main(excel_path):
         except Exception as e:
             fail_count = fail_count + 1
             fail.append(curpath)
-            print('Error:', str(e.args, e.__traceback__.tb_lineno, e.__traceback__.tb_next.tb_frame.__repr__()))
+            print('Error:', e.args, e.__traceback__.tb_lineno)
             print('文件：【' + curpath + '】读取失败，本次跳过……')
             continue
 
@@ -689,6 +802,7 @@ def main(excel_path):
         print(s)
 
     hidden_sheet(excel_path, '部署包配置页')
+    hidden_sheet(excel_path, '默认参数配置页')
 
 
 def load_conf(path='./conf/conf.ini'):
@@ -709,20 +823,28 @@ def load_conf(path='./conf/conf.ini'):
 
 if __name__ == '__main__':
 
-    while True:
-        conf = load_conf()
-
-        if os.path.exists(conf.get('excel_path')) and conf.get('excel_path').endswith('.xlsx'):
-            print('excel路径OK……')
-            break
-        else:
-            print('excel路径错误，请修改配置后按 enter……')
-            skip = input()
+    print("当前程序：", sys.argv[0])
+    print("命令行参数：")
+    for i in range(1, len(sys.argv)):
+        print(sys.argv[0])
+    if len(sys.argv) >= 2 and sys.argv[1].endswith('.xlsx'):
+        excel_path = sys.argv[1]
+        print('excel路径OK……')
+    else:
+        while True:
+            conf = load_conf()
+            if os.path.exists(conf.get('excel_path')) and conf.get('excel_path').endswith('.xlsx'):
+                print('excel路径OK……')
+                excel_path = conf.get('excel_path')
+                break
+            else:
+                print('excel路径错误，请修改配置后按 enter……')
+                skip = input()
             continue
 
     print('---start---')
     time1 = time.time()
-    main(conf.get('excel_path'))
+    main(excel_path)
     time2 = time.time()
     print('---end---spent time: ' + str(int(time2 - time1)) + 's')
     print(input('enter键结束……'))
