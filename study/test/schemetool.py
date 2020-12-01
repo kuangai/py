@@ -274,7 +274,11 @@ def deal_grid_params(excel_path=None, grid_tag=None, sheet_name=None):
     if data_str is None or data_str.strip() == '':
         tmp = []
         for field in fields:
-            tmp.append(field.text.strip())
+            str = field.text
+            if str is None:
+                str = ""
+
+            tmp.append(str.strip())
         grid_df.loc[0] = tmp
     else:
         tmp_arr = data_str.strip().split(';')
@@ -708,7 +712,7 @@ def sheet2map(path='F:\\test\\test.xlsx', sheet_name='参数配置表', k_col_in
 
     for i in range(1, worksheet.max_row):
         key = ""
-        if isConfig and str(worksheet.cell(row=i + 1, column=11).value) == "是":
+        if isConfig and str(worksheet.cell(row=i + 1, column=11).value) != "覆盖":
             continue
         for k_col_index in k_col_indexs:
             tmp = worksheet.cell(row=i + 1, column=k_col_index).value
@@ -746,7 +750,7 @@ def sheet2set(path='F:\\test\\test.xlsx', sheet_name='参数配置表', k_col_in
 
     for i in range(1, worksheet.max_row):
         key = ""
-        if str(worksheet.cell(row=i + 1, column=11).value) == "是":
+        if str(worksheet.cell(row=i + 1, column=11).value) == "过滤":
             for k_col_index in k_col_indexs:
                 tmp = worksheet.cell(row=i + 1, column=k_col_index).value
                 if tmp is None:
@@ -790,6 +794,19 @@ def modify_parameter_config(path="F:\\test\\test.xlsx"):
     else:
         print("根据'默认参数配置页'修改'参数配置表'失败……")
 
+def check_default_parameter_config(excel_path):
+    map = sheet2map(excel_path, "默认参数配置页", [], False)
+    is_exception = False
+    print("检查默认参数配置页sheet...")
+    for line_num in map:
+        judge_field = str(map[line_num][10]).strip()
+        if judge_field != "过滤" and judge_field != "覆盖":
+            print("应用名称："+str(map[line_num][2]).strip()
+                  +" 节点id："+str(map[line_num][3]).strip()
+                  +" 参数："+str(map[line_num][4]).strip()
+                  +" 所在行的 过滤/覆盖 列配置有误")
+            is_exception = True
+    return is_exception
 
 def main(excel_path):
     excel_path_arr = excel_path.split(".xlsx")
@@ -822,6 +839,10 @@ def main(excel_path):
     if len(checks) > 0:
         print('以下安装包路径填写错误，请检查……')
         print(checks)
+        return False
+
+    if check_default_parameter_config(excel_path):
+        print('请先修改默认参数配置页中的异常配置...')
         return False
 
     sheet_name = "参数配置表"
@@ -892,8 +913,8 @@ if __name__ == '__main__':
 
     print("当前程序：", sys.argv[0])
     print("命令行参数：")
-    for i in range(1, len(sys.argv)):
-        print(sys.argv[0])
+    for i in range(0, len(sys.argv)):
+        print(sys.argv[i])
     if len(sys.argv) >= 2 and sys.argv[1].endswith('.xlsx'):
         excel_path = sys.argv[1]
         print('excel路径OK……')
