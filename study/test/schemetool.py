@@ -182,16 +182,16 @@ def write_excel_node(path, sheet_name, listmap=[]):
         workbook = load_workbook(path)  # 打开要写入数据的工作簿
         sheet = workbook[sheet_name]  # 打开要编辑的工作表
         for j in range(0, len(listmap)):  # value.shape[1]获得列数
-            nodecell = sheet.cell(row=1, column=j + 6)
-            usercell = sheet.cell(row=2, column=j + 6)
+            nodecell = sheet.cell(row=1, column=j + 6).value
+            usercell = sheet.cell(row=2, column=j + 6).value
             if usercell is not None and str(usercell) != "":
                 continue
             if nodecell is None or str(nodecell) == '':
                 break
             else:
                 for k in range(0, len(listmap)):
-                    if str(nodecell) == listmap[j]['node']:
-                        sheet.cell(row=2, column=j + 6, value=listmap[j]['user'])
+                    if str(nodecell).lower().replace(".", "") == str(listmap[k]['node']).lower().replace(".", ""):
+                        sheet.cell(row=2, column=j + 6, value=listmap[k]['user'])
 
             #  sheet.cell(row=3, column=j + 6, value=listmap[j]['selected'])
         workbook.save(path)
@@ -702,7 +702,7 @@ def create_global_var_sheet(path="F:\\test\\test.xlsx"):
 
 
 # 将sheet页中的其中几列作为key（k_col_indexs控制列号集合），整行作为value
-def sheet2map(path='F:\\test\\test.xlsx', sheet_name='参数配置表', k_col_indexs=[], isConfig=False):
+def sheet2map(path='F:\\test\\test.xlsx', sheet_name='参数配置表', k_col_indexs=[], isConfig=False, cols =10):
     map = {}
     workbook = load_workbook(path)
     worksheet = workbook[sheet_name]
@@ -722,7 +722,7 @@ def sheet2map(path='F:\\test\\test.xlsx', sheet_name='参数配置表', k_col_in
         val = []
         tmpi = 1
         for item in list(worksheet.rows)[i]:
-            if tmpi > 10:
+            if tmpi > cols:
                 break
             val.append(item.value)
             tmpi = tmpi + 1
@@ -765,10 +765,10 @@ def sheet2set(path='F:\\test\\test.xlsx', sheet_name='参数配置表', k_col_in
 
 
 def modify_parameter_config(path="F:\\test\\test.xlsx"):
-    update_map = sheet2map(path, "默认参数配置页", [3, 4, 5], True)
+    update_map = sheet2map(path, "默认参数配置页", [3, 4, 5], True,10)
     if update_map is None or len(update_map.keys()) == 0:
         return
-    target_map = sheet2map(path, "参数配置表", [3, 4, 5], False)
+    target_map = sheet2map(path, "参数配置表", [3, 4, 5], False,10)
     params = {}
     for update_key in update_map.keys():
         target_map[update_key] = update_map[update_key]
@@ -795,7 +795,7 @@ def modify_parameter_config(path="F:\\test\\test.xlsx"):
         print("根据'默认参数配置页'修改'参数配置表'失败……")
 
 def check_default_parameter_config(excel_path):
-    map = sheet2map(excel_path, "默认参数配置页", [], False)
+    map = sheet2map(excel_path, "默认参数配置页", [], False,11)
     is_exception = False
     print("检查默认参数配置页sheet...")
     for line_num in map:
