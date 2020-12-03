@@ -14,6 +14,60 @@ pd.set_option('display.max_columns', 500)
 pd.set_option('display.width', 1000)
 
 
+def deal_inner_field(field, support_param_types, params, systemType, appType, appName, nodeId, filter_map):
+    listfield = []
+    listfield.append(field)
+    while len(listfield) > 0:
+        tmpfield = listfield.pop(0)
+        if tmpfield is None:
+            continue
+        innerfields = tmpfield.findall("field")
+        if len(innerfields) > 0:
+            for field in innerfields:
+                if field.attrib.get("type") is not None \
+                        and (support_param_types.__contains__(field.attrib.get('type')
+                                                              or field.attrib.get('type') == "switchForm")):
+                    # 加入参数
+                    one = {}
+                    if field.text is None:
+                        text = ""
+                        if field.attrib.get("default") is not None:
+                            text = field.attrib.get("default")
+                    else:
+                        text = field.text.strip()
+
+                    one['参数值'] = text
+                    one["一级类型"] = systemType
+                    one["二级类型"] = appType
+                    one["应用名称"] = appName
+                    one["节点id"] = nodeId
+                    one["参数"] = field.attrib.get('name')
+                    one["参数说明"] = field.attrib.get('label')
+
+                    zgfieldtype = field.attrib.get('zgfieldtype')
+                    if zgfieldtype is None or str(zgfieldtype) == '':
+                        zgfieldtype = "默认"
+                    one["参数类型"] = zgfieldtype
+                    zgfiledtime = field.attrib.get('zgfiledtime')
+                    if zgfiledtime is None:
+                        zgfiledtime = ""
+                    one["参数新增时间"] = zgfiledtime
+                    isfilter = filter_map.get(str(appName + "#" + one["节点id"] + "#" + one["参数"] + "#"))
+                    if isfilter is None or isfilter is not True:
+                        params.append(one)
+
+                else:
+                    if field.attrib.get("type") is not None and field.attrib.get("type") == 'grid':
+                        pass
+                    # 其他类型，判断是否有嵌套
+                    else:
+                        if len(field.findall("field")) > 0:
+                            listfield.append(field)
+
+        else:
+            continue
+
+
 def get_real_sheet_name(excel_path, sheet_name):
     writer = pd.ExcelWriter(excel_path, engine='openpyxl', mode='a')  # 用于首次写入还可自动加表头
     workbook = load_workbook(excel_path)  # 打开要写入数据的工作簿
@@ -25,6 +79,7 @@ def get_real_sheet_name(excel_path, sheet_name):
         tmpi = tmpi + 1
     workbook.close()
     return tmp_sheet_name
+
 
 def deal_database_param(databases=None, params=None, systemType=None, appType=None, appName=None, nodeId=None,
                         filter_map={}):
@@ -47,7 +102,7 @@ def deal_database_param(databases=None, params=None, systemType=None, appType=No
                         one["应用名称"] = appName
                         one["节点id"] = nodeId
                         one["参数"] = "database|" + database.attrib.get("id") + ":" + "auth"
-                        one["参数说明"] = "id为【" + database.attrib.get("id") + "】的数据库user"
+                        one["参数说明"] = "id为【" + database.attrib.get("id") + "】的数据库user,参数值#后配置用户名"
                         one["参数类型"] = "数据库"
                         one["参数新增时间"] = ''
                         isfilter = filter_map.get(str(appName + "#" + nodeId + "#" + one["参数"] + "#"))
@@ -65,7 +120,7 @@ def deal_database_param(databases=None, params=None, systemType=None, appType=No
                         one["应用名称"] = appName
                         one["节点id"] = nodeId
                         one["参数"] = "database|" + database.attrib.get("id") + ":" + "auth"
-                        one["参数说明"] = "id为【" + database.attrib.get("id") + "】的数据库密码"
+                        one["参数说明"] = "id为【" + database.attrib.get("id") + "】的数据库密码,参数值#后配置密码"
                         one["参数类型"] = "数据库"
                         one["参数新增时间"] = ''
                         isfilter = filter_map.get(str(appName + "#" + nodeId + "#" + one["参数"] + "#"))
@@ -90,10 +145,17 @@ def deal_database_param(databases=None, params=None, systemType=None, appType=No
                         params.append(one)
 
                     enable = database.attrib.get("enable")
+                    enabled = database.attrib.get("enabled")
+
                     if enable is None:
-                        enable = "true"
+                        if enabled is None:
+                            enables = "true"
+                        else:
+                            enables = enabled
+                    else:
+                        enables = enable
                     one = {}
-                    one['参数值'] = enable
+                    one['参数值'] = enables
                     one["一级类型"] = systemType
                     one["二级类型"] = appType
                     one["应用名称"] = appName
@@ -138,6 +200,42 @@ def deal_database_param(databases=None, params=None, systemType=None, appType=No
                         isfilter = filter_map.get(str(appName + "#" + nodeId + "#" + one["参数"] + "#"))
                         if isfilter is None or isfilter is not True:
                             params.append(one)
+
+                        host = database.attrib.get("host")
+                        if host is None:
+                            host = ""
+                        one = {}
+                        one['参数值'] = host
+                        one["一级类型"] = systemType
+                        one["二级类型"] = appType
+                        one["应用名称"] = appName
+                        one["节点id"] = nodeId
+                        one["参数"] = "database|" + database.attrib.get("id") + ":" + "host"
+                        one["参数说明"] = "id为【" + database.attrib.get("id") + "】的数据库host"
+                        one["参数类型"] = "数据库"
+                        one["参数新增时间"] = ''
+                        isfilter = filter_map.get(str(appName + "#" + nodeId + "#" + one["参数"] + "#"))
+                        if isfilter is None or isfilter is not True:
+                            params.append(one)
+
+                        port = database.attrib.get("port")
+                        if port is None:
+                            port = ""
+                        one = {}
+                        one['参数值'] = port
+                        one["一级类型"] = systemType
+                        one["二级类型"] = appType
+                        one["应用名称"] = appName
+                        one["节点id"] = nodeId
+                        one["参数"] = "database|" + database.attrib.get("id") + ":" + "port"
+                        one["参数说明"] = "id为【" + database.attrib.get("id") + "】的数据库port"
+                        one["参数类型"] = "数据库"
+                        one["参数新增时间"] = ''
+                        isfilter = filter_map.get(str(appName + "#" + nodeId + "#" + one["参数"] + "#"))
+                        if isfilter is None or isfilter is not True:
+                            params.append(one)
+
+                        # 服务名
 
 
 def excel2map(path='D:\\test\\test.xlsx', sheet_name='Sheet1', k_col_index=3, v_col_index=4):
@@ -214,13 +312,23 @@ def deal_node_params(node=None, params=None, systemType=None, appType=None, appN
         return
     fields = variables.findall('field')
     for field in fields:
-        if field.text is not None \
+        if field is not None \
                 and field.attrib.get('type') is not None \
                 and support_param_types.__contains__(field.attrib.get('type')):
             one = {}
-            param_val = field.text.strip()
+
+            if field.text is None:
+                text = ""
+            else:
+                text = field.text.strip()
+
+            param_val = text
             if param_val is None or param_val.strip() == '':
                 param_val = field.attrib.get('default')
+
+            if field.attrib.get('name') != "grid":
+                param_val = "[all|" + str(param_val) + "]"
+
             one['参数值'] = param_val
             one["一级类型"] = systemType
             one["二级类型"] = appType
@@ -239,6 +347,10 @@ def deal_node_params(node=None, params=None, systemType=None, appType=None, appN
             isfilter = filter_map.get(str(appName + "#" + nodeId + "#" + one["参数"] + "#"))
             if isfilter is None or isfilter is not True:
                 params.append(one)
+        else:
+            if field is not None:
+                deal_inner_field(field, support_param_types, params, systemType, appType, appName, nodeId,
+                                 filter_map)
 
 
 def deal_grid_params(excel_path=None, grid_tag=None, sheet_name=None):
@@ -421,7 +533,7 @@ def xml2excel(xml_path=None, excel_path=None, lists={}, nodemaplist=[], packagel
     :return: 处理结果
     """
 
-    support_param_types = ['input', 'select', 'timestamp', 'switch', 'complexSelect']
+    support_param_types = ['password', 'input', 'select', 'timestamp', 'switch', 'complexSelect']
     try:
         if xml_path == None or excel_path == None:
             return
@@ -485,11 +597,15 @@ def xml2excel(xml_path=None, excel_path=None, lists={}, nodemaplist=[], packagel
                 # 常规参数
                 fields = global_variables.findall('field')
                 for field in fields:
-                    if field.text is not None \
+                    if field is not None \
                             and field.attrib.get('type') is not None \
                             and support_param_types.__contains__(field.attrib.get('type')):
                         one = {}
-                        one['参数值'] = field.text.strip()
+                        if field.text is None:
+                            text = ""
+                        else:
+                            text = field.text.strip()
+                        one['参数值'] = text
                         one["一级类型"] = systemType
                         one["二级类型"] = appType
                         one["应用名称"] = appName
@@ -508,7 +624,10 @@ def xml2excel(xml_path=None, excel_path=None, lists={}, nodemaplist=[], packagel
                         isfilter = filter_map.get(str(appName + "#" + one["节点id"] + "#" + one["参数"] + "#"))
                         if isfilter is None or isfilter is not True:
                             params.append(one)
-
+                    else:
+                        if field is not None:
+                            deal_inner_field(field, support_param_types, params, systemType, appType, appName, "",
+                                             filter_map)
             # 节点参数
             subSystems = root.find('subSystems')
             systems = subSystems.findall('system')
@@ -551,7 +670,8 @@ def xml2excel(xml_path=None, excel_path=None, lists={}, nodemaplist=[], packagel
                         if zgfiledtime is None:
                             zgfiledtime = ""
                         grid_param["参数新增时间"] = zgfiledtime
-                        isfilter = filter_map.get(str(appName + "#" + grid_param["节点id"] + "#" + grid_param["参数"] + "#"))
+                        isfilter = filter_map.get(
+                            str(appName + "#" + grid_param["节点id"] + "#" + grid_param["参数"] + "#"))
                         if isfilter is None or isfilter is not True:
                             params.append(grid_param)
                             deal_grid_params(excel_path, grid, sheet_name)
@@ -569,11 +689,16 @@ def xml2excel(xml_path=None, excel_path=None, lists={}, nodemaplist=[], packagel
                             "name") == 'user' and field.text is not None:
                         nodemap['user'] = field.text.strip()
 
-                    if field.text is not None \
+                    if field is not None \
                             and field.attrib.get('type') is not None \
                             and support_param_types.__contains__(field.attrib.get('type')):
                         one = {}
-                        param_val = field.text.strip()
+                        if field.text is None:
+                            text = ""
+                        else:
+                            text = field.text.strip()
+
+                        param_val = text
                         if param_val is None or param_val.strip() == '':
                             param_val = field.attrib.get('default')
                         one['参数值'] = param_val
@@ -594,6 +719,11 @@ def xml2excel(xml_path=None, excel_path=None, lists={}, nodemaplist=[], packagel
                         isfilter = filter_map.get(str(appName + "#" + one["节点id"] + "#" + one["参数"] + "#"))
                         if isfilter is None or isfilter is not True:
                             params.append(one)
+                    else:
+                        if field is not None:
+                            deal_inner_field(field, support_param_types, params, systemType, appType, appName,
+                                             sys.attrib.get('id'),
+                                             filter_map)
 
                 nodemaplist.append(nodemap)
         # print (date)
@@ -650,7 +780,7 @@ def deal_zip(zip=None, zip_name='', excel_path=None, lists={}, nodemaplist=[], p
     if len(contains) > 0:
         print('当前压缩文件【{}】存在deploy.xml，提取文件。'.format(zip_name))
         xml = zip.extract(contains[0], path=None, pwd=None)
-        re = xml2excel(xml, excel_path, lists, nodemaplist, packagelist,filter_map)
+        re = xml2excel(xml, excel_path, lists, nodemaplist, packagelist, filter_map)
         os.remove(xml)
         print('当前压缩文件【{}】处理完成！\n'.format(zip_name))
     else:
@@ -663,7 +793,7 @@ def deal_zip(zip=None, zip_name='', excel_path=None, lists={}, nodemaplist=[], p
                 contains1 = [x for i, x in enumerate(sdkzip.namelist()) if x.find('deploy.xml') != -1]
                 if len(contains1) > 0:
                     xml = sdkzip.extract(contains1[0], path=None, pwd=None)
-                    re = xml2excel(xml, excel_path, lists, nodemaplist, packagelist,filter_map)
+                    re = xml2excel(xml, excel_path, lists, nodemaplist, packagelist, filter_map)
                     os.remove(xml)
                     print('当前压缩文件【{}】处理完成！\n'.format(zip_name))
                 else:
@@ -702,7 +832,7 @@ def create_global_var_sheet(path="F:\\test\\test.xlsx"):
 
 
 # 将sheet页中的其中几列作为key（k_col_indexs控制列号集合），整行作为value
-def sheet2map(path='F:\\test\\test.xlsx', sheet_name='参数配置表', k_col_indexs=[], isConfig=False, cols =10):
+def sheet2map(path='F:\\test\\test.xlsx', sheet_name='参数配置表', k_col_indexs=[], isConfig=False, cols=10):
     map = {}
     workbook = load_workbook(path)
     worksheet = workbook[sheet_name]
@@ -755,7 +885,7 @@ def sheet2set(path='F:\\test\\test.xlsx', sheet_name='参数配置表', k_col_in
                 tmp = worksheet.cell(row=i + 1, column=k_col_index).value
                 if tmp is None:
                     tmp = ""
-                key = key + str(tmp).strip()  + "#"
+                key = key + str(tmp).strip() + "#"
             map[key] = True
 
     print("读取【" + sheet_name + "】sheet页转为set如下：")
@@ -765,10 +895,10 @@ def sheet2set(path='F:\\test\\test.xlsx', sheet_name='参数配置表', k_col_in
 
 
 def modify_parameter_config(path="F:\\test\\test.xlsx"):
-    update_map = sheet2map(path, "默认参数配置页", [3, 4, 5], True,10)
+    update_map = sheet2map(path, "默认参数配置页", [3, 4, 5], True, 10)
     if update_map is None or len(update_map.keys()) == 0:
         return
-    target_map = sheet2map(path, "参数配置表", [3, 4, 5], False,10)
+    target_map = sheet2map(path, "参数配置表", [3, 4, 5], False, 10)
     params = {}
     for update_key in update_map.keys():
         target_map[update_key] = update_map[update_key]
@@ -794,19 +924,21 @@ def modify_parameter_config(path="F:\\test\\test.xlsx"):
     else:
         print("根据'默认参数配置页'修改'参数配置表'失败……")
 
+
 def check_default_parameter_config(excel_path):
-    map = sheet2map(excel_path, "默认参数配置页", [], False,11)
+    map = sheet2map(excel_path, "默认参数配置页", [], False, 11)
     is_exception = False
     print("检查默认参数配置页sheet...")
     for line_num in map:
         judge_field = str(map[line_num][10]).strip()
         if judge_field != "过滤" and judge_field != "覆盖":
-            print("应用名称："+str(map[line_num][2]).strip()
-                  +" 节点id："+str(map[line_num][3]).strip()
-                  +" 参数："+str(map[line_num][4]).strip()
-                  +" 所在行的 过滤/覆盖 列配置有误")
+            print("应用名称：" + str(map[line_num][2]).strip()
+                  + " 节点id：" + str(map[line_num][3]).strip()
+                  + " 参数：" + str(map[line_num][4]).strip()
+                  + " 所在行的 过滤/覆盖 列配置有误")
             is_exception = True
     return is_exception
+
 
 def main(excel_path):
     excel_path_arr = excel_path.split(".xlsx")
