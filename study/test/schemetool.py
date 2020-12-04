@@ -49,13 +49,12 @@ def deal_inner_field(field1, support_param_types, params, systemType, appType, a
     listfield.append(field1)
     while len(listfield) > 0:
         tmpfield = listfield.pop(0)
-        if tmpfield.attrib.get("type") is not None  and  tmpfield.attrib.get('type') == "switchForm":
+        if tmpfield.attrib.get("type") is not None and tmpfield.attrib.get('type') == "switchForm":
             deal_inner_field_self(tmpfield, params, systemType, appType, appName, nodeId, filter_map)
 
         if tmpfield is None:
             continue
         innerfields = tmpfield.findall("field")
-
 
         if len(innerfields) > 0:
             for field in innerfields:
@@ -389,7 +388,7 @@ def deal_node_params(node=None, params=None, systemType=None, appType=None, appN
                                  filter_map)
 
 
-def deal_grid_params(excel_path=None, grid_tag=None, sheet_name=None):
+def deal_grid_params(excel_path=None, grid_tag=None, sheet_name=None, deal_flag=True):
     """
     grid参数生成sheet
     :param sheet_name:
@@ -397,6 +396,8 @@ def deal_grid_params(excel_path=None, grid_tag=None, sheet_name=None):
     :param grid_tag: grid标签对象
     :return: 处理结果 True or False
     """
+    if deal_flag is False:
+        return True
     if excel_path is None or grid_tag is None or sheet_name is None:
         return False
 
@@ -558,7 +559,7 @@ def write_excel_package(excel_path=None, sheet_name="安装包列表", packageli
         return False
 
 
-def xml2excel(xml_path=None, excel_path=None, lists={}, nodemaplist=[], packagelist=[], filter_map={}):
+def xml2excel(xml_path=None, excel_path=None, lists={}, nodemaplist=[], packagelist=[], filter_map={}, exclude_app=''):
     """
     xml数据以追加的方式转存excel
     :param xml_path:
@@ -569,11 +570,14 @@ def xml2excel(xml_path=None, excel_path=None, lists={}, nodemaplist=[], packagel
     :return: 处理结果
     """
 
+    exclude_app_list = exclude_app.split(";")
+
     support_param_types = ['password', 'input', 'select', 'timestamp', 'switch', 'complexSelect']
     try:
         if xml_path == None or excel_path == None:
             return
         params = []
+        key = ""
 
         with open(xml_path, 'tr', encoding='utf-8') as rf:
             tree = ET.parse(rf)
@@ -583,6 +587,9 @@ def xml2excel(xml_path=None, excel_path=None, lists={}, nodemaplist=[], packagel
             version = str(basic.find('version').text).strip()
             appType = lists[1]
             appName = basic.find('appName').text
+
+            key = systemType + '#' + appType + '#' + appName
+            deal_flag = not exclude_app_list.__contains__(key)
 
             # 收集部署包sheet需要的数据
             packagemap = {}
@@ -629,7 +636,7 @@ def xml2excel(xml_path=None, excel_path=None, lists={}, nodemaplist=[], packagel
                         isfilter = filter_map.get(str(appName + "#" + "#" + grid_param["参数"] + "#"))
                         if isfilter is None or isfilter is not True:
                             params.append(grid_param)
-                            deal_grid_params(excel_path, grid, sheet_name)
+                            deal_grid_params(excel_path, grid, sheet_name, deal_flag)
                 # 常规参数
                 fields = global_variables.findall('field')
                 for field in fields:
@@ -710,7 +717,7 @@ def xml2excel(xml_path=None, excel_path=None, lists={}, nodemaplist=[], packagel
                             str(appName + "#" + grid_param["节点id"] + "#" + grid_param["参数"] + "#"))
                         if isfilter is None or isfilter is not True:
                             params.append(grid_param)
-                            deal_grid_params(excel_path, grid, sheet_name)
+                            deal_grid_params(excel_path, grid, sheet_name, deal_flag)
 
                 # 私有节点参数
                 node = sys.find('node')
@@ -768,35 +775,40 @@ def xml2excel(xml_path=None, excel_path=None, lists={}, nodemaplist=[], packagel
 
         re = False
         sheet_name = '参数配置表'
-        try:
-            for k in range(0, len(params)):
-                var = params[k]
-                s = []
-                s.append(var['一级类型'])
-                s.append(var['二级类型'])
-                s.append(var['应用名称'])
-                s.append(var['节点id'])
-                s.append(var['参数'])
-                s.append(var['参数说明'])
-                s.append(var['参数值'])
-                s.append(var['参数类型'])
-                s.append("")
-                s.append(var['参数新增时间'])
-                paramsdf.loc[k] = s
-            print('本次读取常规参数如下：')
-            print(paramsdf)
-            print("开始写入参数配置表 sheet……")
-            re = write_excel_append(excel_path, sheet_name, paramsdf)
-            if re:
-                print("写入参数配置表 sheet成功……")
-            else:
-                print("写入参数配置表 sheet失败……")
+        if not exclude_app_list.__contains__(key):
+            try:
+                for k in range(0, len(params)):
+                    var = params[k]
+                    s = []
+                    s.append(var['一级类型'])
+                    s.append(var['二级类型'])
+                    s.append(var['应用名称'])
+                    s.append(var['节点id'])
+                    s.append(var['参数'])
+                    s.append(var['参数说明'])
+                    s.append(var['参数值'])
+                    s.append(var['参数类型'])
+                    s.append("")
+                    s.append(var['参数新增时间'])
+                    paramsdf.loc[k] = s
+                print('本次读取常规参数如下：')
+                print(paramsdf)
+                print("开始写入参数配置表 sheet……")
+                re = write_excel_append(excel_path, sheet_name, paramsdf)
+                if re:
+                    print("写入参数配置表 sheet成功……")
+                else:
+                    print("写入参数配置表 sheet失败……")
 
-        except Exception as e:
-            print("Error 写入参数配置表 sheet失败……", e.args, e.__traceback__.tb_lineno)
-            if e.args.__contains__('Permission denied'):
-                print("Error: 【请关闭待写入的excel】")
-            return False
+            except Exception as e:
+                print("Error 写入参数配置表 sheet失败……", e.args, e.__traceback__.tb_lineno)
+                if e.args.__contains__('Permission denied'):
+                    print("Error: 【请关闭待写入的excel】")
+                return False
+        else:
+            re = True
+            print("当前应用被排除，不再写入deploy.xml中的参数")
+
         rf.close()
         print("this time xml2excel execute is fine")
         return re
@@ -805,7 +817,7 @@ def xml2excel(xml_path=None, excel_path=None, lists={}, nodemaplist=[], packagel
         return False
 
 
-def deal_zip(zip=None, zip_name='', excel_path=None, lists={}, nodemaplist=[], packagelist=[]):
+def deal_zip(zip=None, zip_name='', excel_path=None, lists={}, nodemaplist=[], packagelist=[], exclude_app=''):
     filter_map = sheet2set(excel_path, "默认参数配置页", [3, 4, 5])
     re = False
     if zip == None or excel_path == None:
@@ -816,7 +828,7 @@ def deal_zip(zip=None, zip_name='', excel_path=None, lists={}, nodemaplist=[], p
     if len(contains) > 0:
         print('当前压缩文件【{}】存在deploy.xml，提取文件。'.format(zip_name))
         xml = zip.extract(contains[0], path=None, pwd=None)
-        re = xml2excel(xml, excel_path, lists, nodemaplist, packagelist, filter_map)
+        re = xml2excel(xml, excel_path, lists, nodemaplist, packagelist, filter_map, exclude_app)
         os.remove(xml)
         print('当前压缩文件【{}】处理完成！\n'.format(zip_name))
     else:
@@ -829,7 +841,7 @@ def deal_zip(zip=None, zip_name='', excel_path=None, lists={}, nodemaplist=[], p
                 contains1 = [x for i, x in enumerate(sdkzip.namelist()) if x.find('deploy.xml') != -1]
                 if len(contains1) > 0:
                     xml = sdkzip.extract(contains1[0], path=None, pwd=None)
-                    re = xml2excel(xml, excel_path, lists, nodemaplist, packagelist, filter_map)
+                    re = xml2excel(xml, excel_path, lists, nodemaplist, packagelist, filter_map, exclude_app)
                     os.remove(xml)
                     print('当前压缩文件【{}】处理完成！\n'.format(zip_name))
                 else:
@@ -976,7 +988,7 @@ def check_default_parameter_config(excel_path):
     return is_exception
 
 
-def main(excel_path):
+def main(excel_path,exclude_app):
     excel_path_arr = excel_path.split(".xlsx")
     excel_path = excel_path_arr[0] + "-方案.xlsx"
     old_path = excel_path_arr[0] + ".xlsx"
@@ -1025,7 +1037,7 @@ def main(excel_path):
         print(f, ':', '【' + curpath + '】')
         try:
             z = zipfile.ZipFile(curpath, "r")
-            result = deal_zip(z, curpath, excel_path, map[f], nodemaplist, packagelist)
+            result = deal_zip(z, curpath, excel_path, map[f], nodemaplist, packagelist, exclude_app)
             if result:
                 success_count = success_count + 1
                 succ.append(curpath)
@@ -1053,7 +1065,7 @@ def main(excel_path):
     for s in succ:
         print(s)
 
-    print('fail: ')
+    print('warning不支持的安装包: ')
     for s in fail:
         print(s)
 
@@ -1067,6 +1079,8 @@ def load_conf(path='./conf/conf.ini'):
     try:
         config.read(filenames=path, encoding='utf-8-sig')  # 搞不定就换 utf-8-sig
         print("excel路径：【{}】".format(config.get("path", "excel_path")))
+        print("不从deploy.xml读取配置的应用：")
+        print(config.get("app", "exclude"))
     except:
         print('加载失败，请检查配置文件conf/conf.ini……')
         print('3秒后自动退出……')
@@ -1074,13 +1088,15 @@ def load_conf(path='./conf/conf.ini'):
             print(str(3 - i) + '……')
             time.sleep(1)
         sys.exit('end……')
-    return {'excel_path': config.get("path", "excel_path")}
+    return {'excel_path': config.get("path", "excel_path"), 'exclude_app': config.get("app", "exclude")}
 
 
 if __name__ == '__main__':
 
     print("当前程序：", sys.argv[0])
     print("命令行参数：")
+
+    exclude_app = ""
     for i in range(0, len(sys.argv)):
         print(sys.argv[i])
     if len(sys.argv) >= 2 and sys.argv[1].endswith('.xlsx'):
@@ -1089,6 +1105,7 @@ if __name__ == '__main__':
     else:
         while True:
             conf = load_conf()
+            exclude_app = conf.get('exclude_app')
             if os.path.exists(conf.get('excel_path')) and conf.get('excel_path').endswith('.xlsx'):
                 print('excel路径OK……')
                 excel_path = conf.get('excel_path')
@@ -1100,7 +1117,7 @@ if __name__ == '__main__':
 
     print('---start---')
     time1 = time.time()
-    main(excel_path)
+    main(excel_path, exclude_app)
     time2 = time.time()
     print('---end---spent time: ' + str(int(time2 - time1)) + 's')
     print(input('enter键结束……'))
