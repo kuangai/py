@@ -13,20 +13,56 @@ pd.set_option('display.max_rows', 500)
 pd.set_option('display.max_columns', 500)
 pd.set_option('display.width', 1000)
 
+def deal_inner_field_self(field, params, systemType, appType, appName, nodeId, filter_map):
+    # 加入参数
+    one = {}
+    if field.text is None:
+        text = ""
+        if field.attrib.get("default") is not None:
+            text = field.attrib.get("default")
+    else:
+        text = field.text.strip()
 
-def deal_inner_field(field, support_param_types, params, systemType, appType, appName, nodeId, filter_map):
+    one['参数值'] = text
+    one["一级类型"] = systemType
+    one["二级类型"] = appType
+    one["应用名称"] = appName
+    one["节点id"] = nodeId
+    one["参数"] = field.attrib.get('name')
+    one["参数说明"] = field.attrib.get('label')
+
+    zgfieldtype = field.attrib.get('zgfieldtype')
+    if zgfieldtype is None or str(zgfieldtype) == '':
+        zgfieldtype = "默认"
+    one["参数类型"] = zgfieldtype
+    zgfiledtime = field.attrib.get('zgfiledtime')
+    if zgfiledtime is None:
+        zgfiledtime = ""
+    one["参数新增时间"] = zgfiledtime
+    isfilter = filter_map.get(str(appName + "#" + one["节点id"] + "#" + one["参数"] + "#"))
+    if isfilter is None or isfilter is not True:
+        params.append(one)
+
+
+def deal_inner_field(field1, support_param_types, params, systemType, appType, appName, nodeId, filter_map):
     listfield = []
-    listfield.append(field)
+    listfield.append(field1)
     while len(listfield) > 0:
         tmpfield = listfield.pop(0)
+        if tmpfield.attrib.get("type") is not None  and  tmpfield.attrib.get('type') == "switchForm":
+            deal_inner_field_self(tmpfield, params, systemType, appType, appName, nodeId, filter_map)
+
         if tmpfield is None:
             continue
         innerfields = tmpfield.findall("field")
+
+
         if len(innerfields) > 0:
             for field in innerfields:
+                aa = field.attrib.get("type")
+                bb = field.attrib.get("name")
                 if field.attrib.get("type") is not None \
-                        and (support_param_types.__contains__(field.attrib.get('type')
-                                                              or field.attrib.get('type') == "switchForm")):
+                        and (support_param_types.__contains__(field.attrib.get('type'))):
                     # 加入参数
                     one = {}
                     if field.text is None:
@@ -201,39 +237,39 @@ def deal_database_param(databases=None, params=None, systemType=None, appType=No
                         if isfilter is None or isfilter is not True:
                             params.append(one)
 
-                        host = database.attrib.get("host")
-                        if host is None:
-                            host = ""
-                        one = {}
-                        one['参数值'] = host
-                        one["一级类型"] = systemType
-                        one["二级类型"] = appType
-                        one["应用名称"] = appName
-                        one["节点id"] = nodeId
-                        one["参数"] = "database|" + database.attrib.get("id") + ":" + "host"
-                        one["参数说明"] = "id为【" + database.attrib.get("id") + "】的数据库host"
-                        one["参数类型"] = "数据库"
-                        one["参数新增时间"] = ''
-                        isfilter = filter_map.get(str(appName + "#" + nodeId + "#" + one["参数"] + "#"))
-                        if isfilter is None or isfilter is not True:
-                            params.append(one)
+                    host = database.attrib.get("host")
+                    if host is None:
+                        host = ""
+                    one = {}
+                    one['参数值'] = host
+                    one["一级类型"] = systemType
+                    one["二级类型"] = appType
+                    one["应用名称"] = appName
+                    one["节点id"] = nodeId
+                    one["参数"] = "database|" + database.attrib.get("id") + ":" + "host"
+                    one["参数说明"] = "id为【" + database.attrib.get("id") + "】的数据库host"
+                    one["参数类型"] = "数据库"
+                    one["参数新增时间"] = ''
+                    isfilter = filter_map.get(str(appName + "#" + nodeId + "#" + one["参数"] + "#"))
+                    if isfilter is None or isfilter is not True:
+                        params.append(one)
 
-                        port = database.attrib.get("port")
-                        if port is None:
-                            port = ""
-                        one = {}
-                        one['参数值'] = port
-                        one["一级类型"] = systemType
-                        one["二级类型"] = appType
-                        one["应用名称"] = appName
-                        one["节点id"] = nodeId
-                        one["参数"] = "database|" + database.attrib.get("id") + ":" + "port"
-                        one["参数说明"] = "id为【" + database.attrib.get("id") + "】的数据库port"
-                        one["参数类型"] = "数据库"
-                        one["参数新增时间"] = ''
-                        isfilter = filter_map.get(str(appName + "#" + nodeId + "#" + one["参数"] + "#"))
-                        if isfilter is None or isfilter is not True:
-                            params.append(one)
+                    port = database.attrib.get("port")
+                    if port is None:
+                        port = ""
+                    one = {}
+                    one['参数值'] = port
+                    one["一级类型"] = systemType
+                    one["二级类型"] = appType
+                    one["应用名称"] = appName
+                    one["节点id"] = nodeId
+                    one["参数"] = "database|" + database.attrib.get("id") + ":" + "port"
+                    one["参数说明"] = "id为【" + database.attrib.get("id") + "】的数据库port"
+                    one["参数类型"] = "数据库"
+                    one["参数新增时间"] = ''
+                    isfilter = filter_map.get(str(appName + "#" + nodeId + "#" + one["参数"] + "#"))
+                    if isfilter is None or isfilter is not True:
+                        params.append(one)
 
                         # 服务名
 
