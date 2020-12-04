@@ -1065,7 +1065,7 @@ def load_conf(path='./conf/conf.ini'):
     print('正在加载配置文件……')
     config = configparser.ConfigParser()
     try:
-        config.read(filenames=path, encoding='utf-8')  # 搞不定就换 utf-8-sig
+        config.read(filenames=path, encoding='utf-8-sig')  # 搞不定就换 utf-8-sig
         print("excel路径：【{}】".format(config.get("path", "excel_path")))
     except:
         print('加载失败，请检查配置文件conf/conf.ini……')
