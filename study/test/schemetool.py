@@ -16,9 +16,9 @@ pd.set_option('display.max_columns', 500)
 pd.set_option('display.width', 1000)
 
 
-def deal_json_params(package_list=[], info_dict=None, nodemaplist=[], lists={}):
+def deal_json_params(excel_path="", package_list=[], info_dict=None, nodemaplist=[], lists={}, cover_map={}):
     if info_dict is None:
-        return
+        return True
 
     systemType = info_dict["basic"]["systemType"]
     version = info_dict["basic"]["version"]
@@ -52,9 +52,50 @@ def deal_json_params(package_list=[], info_dict=None, nodemaplist=[], lists={}):
                         nodemap['user'] = variable["value"]
                         nodemap['node'] = system["id"]
                         nodemaplist.append(nodemap)
+    params = []
+
+    # print (date)
+    paramsdf = DataFrame(
+        columns=('一级类型', '二级类型', '应用名称', '节点id', '参数', '参数说明', '参数值', '参数类型', '参数覆盖', '参数新增时间'))  # 生成空的pandas表
+
+    modify_parameter_config(cover_map, params, appName)
+
+    re = False
+    sheet_name = '参数配置表'
+
+    try:
+        for k in range(0, len(params)):
+            var = params[k]
+            s = []
+            s.append(str(var['一级类型']).strip())
+            s.append(str(var['二级类型']).strip())
+            s.append(str(var['应用名称']).strip())
+            s.append(str(var['节点id']).strip())
+            s.append(var['参数'])
+            s.append(var['参数说明'])
+            s.append(var['参数值'])
+            s.append(var['参数类型'])
+            s.append("")
+            s.append(var['参数新增时间'])
+            paramsdf.loc[k] = s
+        print('本次读取常规参数如下：')
+        print(paramsdf)
+        print("开始写入参数配置表 sheet……")
+        re = write_excel_append(excel_path, sheet_name, paramsdf)
+        if re:
+            print("写入参数配置表 sheet成功……")
+        else:
+            print("写入参数配置表 sheet失败……")
+        return re
+    except Exception as e:
+        print("Error 写入参数配置表 sheet失败……", e.args, e.__traceback__.tb_lineno)
+        if e.args.__contains__('Permission denied'):
+            print("Error: 【请关闭待写入的excel】")
+        return False
 
 
-def json2excel(package_list=[], json_path=None, nodemaplist=[], lists={}):
+
+def json2excel(excel_path="", package_list=[], json_path=None, nodemaplist=[], lists={}, cover_map={}):
     """
     处理zk的deploy.json
     暂不解析参数，只把zk的部署包信息和节点用户存入安装包列表sheet和方案名称sheet
@@ -68,7 +109,7 @@ def json2excel(package_list=[], json_path=None, nodemaplist=[], lists={}):
             if info_dict and len(info_dict) > 0:
                 print("本次从文件获取json对象：")
                 print(info_dict)
-                deal_json_params(package_list, info_dict, nodemaplist, lists=lists)
+                deal_json_params(excel_path, package_list, info_dict, nodemaplist, lists=lists, cover_map=cover_map)
                 return True
             else:
                 print("json参数为空，不再处理……")
@@ -77,7 +118,6 @@ def json2excel(package_list=[], json_path=None, nodemaplist=[], lists={}):
             print('Error  json 参数处理失败……', e.args, e.__traceback__.tb_lineno)
         f.close()
         return False
-
 
 
 def deal_inner_field_self(field, params, systemType, appType, appName, nodeId, filter_map):
@@ -860,43 +900,42 @@ def xml2excel(cover_map={}, xml_path=None, excel_path=None, lists={}, nodemaplis
             columns=('一级类型', '二级类型', '应用名称', '节点id', '参数', '参数说明', '参数值', '参数类型', '参数覆盖', '参数新增时间'))  # 生成空的pandas表
 
         # 处理覆盖参数
+        if not exclude_app_list.__contains__(key):
+            params = []
         modify_parameter_config(cover_map, params, appName)
 
         re = False
         sheet_name = '参数配置表'
-        if not exclude_app_list.__contains__(key):
-            try:
-                for k in range(0, len(params)):
-                    var = params[k]
-                    s = []
-                    s.append(str(var['一级类型']).strip())
-                    s.append(str(var['二级类型']).strip())
-                    s.append(str(var['应用名称']).strip())
-                    s.append(str(var['节点id']).strip())
-                    s.append(var['参数'])
-                    s.append(var['参数说明'])
-                    s.append(var['参数值'])
-                    s.append(var['参数类型'])
-                    s.append("")
-                    s.append(var['参数新增时间'])
-                    paramsdf.loc[k] = s
-                print('本次读取常规参数如下：')
-                print(paramsdf)
-                print("开始写入参数配置表 sheet……")
-                re = write_excel_append(excel_path, sheet_name, paramsdf)
-                if re:
-                    print("写入参数配置表 sheet成功……")
-                else:
-                    print("写入参数配置表 sheet失败……")
 
-            except Exception as e:
-                print("Error 写入参数配置表 sheet失败……", e.args, e.__traceback__.tb_lineno)
-                if e.args.__contains__('Permission denied'):
-                    print("Error: 【请关闭待写入的excel】")
-                return False
-        else:
-            re = True
-            print("当前应用被排除，不再写入deploy.xml中的参数")
+        try:
+            for k in range(0, len(params)):
+                var = params[k]
+                s = []
+                s.append(str(var['一级类型']).strip())
+                s.append(str(var['二级类型']).strip())
+                s.append(str(var['应用名称']).strip())
+                s.append(str(var['节点id']).strip())
+                s.append(var['参数'])
+                s.append(var['参数说明'])
+                s.append(var['参数值'])
+                s.append(var['参数类型'])
+                s.append("")
+                s.append(var['参数新增时间'])
+                paramsdf.loc[k] = s
+            print('本次读取常规参数如下：')
+            print(paramsdf)
+            print("开始写入参数配置表 sheet……")
+            re = write_excel_append(excel_path, sheet_name, paramsdf)
+            if re:
+                print("写入参数配置表 sheet成功……")
+            else:
+                print("写入参数配置表 sheet失败……")
+
+        except Exception as e:
+            print("Error 写入参数配置表 sheet失败……", e.args, e.__traceback__.tb_lineno)
+            if e.args.__contains__('Permission denied'):
+                print("Error: 【请关闭待写入的excel】")
+            return False
 
         rf.close()
         print("this time xml2excel execute is fine")
@@ -925,7 +964,8 @@ def deal_zip(zip=None, zip_name='', excel_path=None, lists={}, nodemaplist=[], p
     elif len(contains_json) > 0:
         print('当前压缩文件【{}】存在deploy.json，提取文件。'.format(zip_name))
         json_path = zip.extract(contains_json[0], path=None, pwd=None)
-        re = json2excel(package_list=packagelist, json_path=json_path, nodemaplist=nodemaplist, lists=lists)
+        re = json2excel(excel_path=excel_path, package_list=packagelist, json_path=json_path, nodemaplist=nodemaplist, lists=lists,
+                        cover_map=cover_map)
         os.remove(json_path)
         print('当前压缩文件【{}】处理完成！\n'.format(zip_name))
     else:
@@ -943,7 +983,8 @@ def deal_zip(zip=None, zip_name='', excel_path=None, lists={}, nodemaplist=[], p
                     print('当前压缩文件【{}】处理完成！\n'.format(zip_name))
                 elif len(contains1_json) > 0:
                     json_path = sdkzip.extract(contains1_json[0], path=None, pwd=None)
-                    re = json2excel(package_list=packagelist, json_path=json_path, nodemaplist=nodemaplist, lists=lists)
+                    re = json2excel(excel_path=excel_path, package_list=packagelist, json_path=json_path, nodemaplist=nodemaplist, lists=lists,
+                                    cover_map=cover_map)
                     os.remove(json_path)
                     print('当前压缩文件【{}】处理完成！\n'.format(zip_name))
                 else:
@@ -1127,9 +1168,8 @@ def modify_parameter_config(cover_map=None, params=[], app_name=""):
                 value_list = app_param_map.get(key)  # 覆盖掉旧参数
                 convert_params(param, value_list)
 
-
     for k in app_param_map.keys():
-        if params_keys.get(k) is not None and params_keys.get(k) is True:
+        if params_keys.get(k) is None:
             param = {}
             value_list = app_param_map.get(k)  # 覆盖掉旧参数
             convert_params(param, value_list)
