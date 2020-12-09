@@ -5,7 +5,7 @@ import ImgUtil
 
 # https://www.uyn8.cn/
 path = "../../../img/vva/"
-url = """https://www.uyn8.cn/archives/422"""
+url = """https://www.uyn8.cn/archives/1040"""
 dir = url.split("/")[len(url.split("/"))-1]
 path = path + dir
 if not os.path.exists(path):

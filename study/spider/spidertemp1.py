@@ -5,7 +5,7 @@ import ImgUtil
 
 # https://www.uyn8.cn/
 path = "../../../img/cos/"
-url = """https://www.uyn8.cn/archives/422"""
+url = """https://gxbhala.tuchong.com/30536604"""
 dir = url.split("/")[len(url.split("/"))-1]
 path = path + dir
 if not os.path.exists(path):
@@ -22,8 +22,8 @@ html_doc = urllib.request.urlopen(url, timeout=5).read()
 
 soup = BeautifulSoup(html_doc,"html.parser",from_encoding="utf-8")
 #获取所有的链接
-div = soup.find('div',class_="entry-content u-text-format u-clearfix")
-imgs = div.find_all('img')
+div = soup.find('article',class_="post-content")
+imgs = div.find_all('img',class_='multi-photo-image')
 for i in imgs:
     name = str(i.get("src")).split("/")
     file = name[len(name)-1]

@@ -394,7 +394,7 @@ def deal_json_params(excel_path="", package_list=[], info_dict=None, nodemaplist
             log.logger.debug("写入参数配置表 sheet失败……")
         return re
     except Exception as e:
-        log.logger.error("Error 写入参数配置表 sheet失败……", e.args, e.__traceback__.tb_lineno)
+        log.logger.error("Error 写入参数配置表 sheet失败……"+ e.args+"   "+ e.__traceback__.tb_lineno)
         if e.args.__contains__('Permission denied'):
             log.logger.error("Error: 【请关闭待写入的excel】")
         return False
@@ -420,7 +420,7 @@ def json2excel(excel_path="", package_list=[], json_path=None, nodemaplist=[], l
                 log.logger.debug("json参数为空，不再处理……")
                 return False
         except Exception as e:
-            log.logger.error('Error  json 参数处理失败……', e.args, e.__traceback__.tb_lineno)
+            log.logger.error('Error  json 参数处理失败……'+ e.args+"  "+ e.__traceback__.tb_lineno)
         f.close()
         return False
 
@@ -749,7 +749,7 @@ def write_excel_node(path, sheet_name, listmap=[]):
         log.logger.debug('方案名称 sheet 写入成功……')
         return True
     except Exception as e:
-        log.logger.error('Error 方案名称 sheet 写入失败……', e.args, e.__traceback__.tb_lineno)
+        log.logger.error('Error 方案名称 sheet 写入失败……'+ e.args+"  "+ e.__traceback__.tb_lineno)
         if e.args.__contains__('Permission denied'):
             log.logger.error("Error: 【请关闭待写入的excel】")
         return False
@@ -860,14 +860,14 @@ def deal_grid_params(excel_path=None, grid_tag=None, sheet_name=None, deal_flag=
     try:
         re = write_excel_append(excel_path, sheet_name, grid_df)
         if re:
-            log.logger.debug(grid_name, " grid sheet写入成功……")
+            log.logger.debug(grid_name+ " grid sheet写入成功……")
             log.logger.debug('\n')
             return True
         else:
-            log.logger.debug(grid_name, " grid sheet写入失败……")
+            log.logger.debug(grid_name+ " grid sheet写入失败……")
             return False
     except Exception as e:
-        log.logger.error("Error" + grid_name + " grid sheet写入失败……", e.args, e.__traceback__.tb_lineno)
+        log.logger.error("Error" + grid_name + " grid sheet写入失败……" +e.args+ "   "+ e.__traceback__.tb_lineno)
         if e.args.__contains__('Permission denied'):
             log.logger.error("Error: 【请关闭待写入的excel】")
             log.logger.debug('\n')
@@ -908,7 +908,7 @@ def write_excel_append(path, sheet_name, dateframe=None):
         workbook.close()
         return True
     except Exception as e:
-        log.logger.error("Error 参数配置表sheet 写入失败…… ", e.args, e.__traceback__.tb_lineno)
+        log.logger.error("Error 参数配置表sheet 写入失败…… "+ e.args+"  "+ e.__traceback__.tb_lineno)
         if e.args.__contains__('Permission denied'):
             log.logger.error("Error: 【请关闭待写入的excel】")
         return False
@@ -971,7 +971,7 @@ def write_excel_package(excel_path=None, sheet_name="安装包列表", packageli
         log.logger.debug("安装包列表 sheet写入成功……")
         return True
     except Exception as e:
-        log.logger.error("Error 安装包列表sheet写入失败……", e.args, e.__traceback__.tb_lineno)
+        log.logger.error("Error 安装包列表sheet写入失败……"+ e.args+"  "+ e.__traceback__.tb_lineno)
         if e.args.__contains__('Permission denied'):
             log.logger.error("Error: 【请关闭待写入的excel】")
         return False
@@ -1037,7 +1037,7 @@ def xml2excel(cover_map={}, xml_path=None, excel_path=None, lists={}, nodemaplis
                 # grid
                 global_grid_fields = r_find_all(global_variables, target='field', type='grid')
                 if len(global_grid_fields) > 0:
-                    log.logger.debug(appName, ' 全局参数中对应的grid类型参数共【{}】个'.format(len(global_grid_fields)))
+                    log.logger.debug(appName+ ' 全局参数中对应的grid类型参数共【{}】个'.format(len(global_grid_fields)))
                     for grid in global_grid_fields:
 
                         sheet_name = grid.attrib.get('label')
@@ -1119,7 +1119,7 @@ def xml2excel(cover_map={}, xml_path=None, excel_path=None, lists={}, nodemaplis
                 # 单独处理grid参数，由于grid参数标签层级不固定，因此类似递归查询，每个grid单独生成新的sheet页
                 grid_fields = r_find_all(sys, target='field', type='grid')
                 if len(grid_fields) > 0:
-                    log.logger.debug(appName, ' 当前节点【{}】对应的grid类型参数共【{}】个'.format(sys.attrib.get('id'), len(grid_fields)))
+                    log.logger.debug(appName+ ' 当前节点【{}】对应的grid类型参数共【{}】个'.format(sys.attrib.get('id'), len(grid_fields)))
                     for grid in grid_fields:
                         sheet_name = grid.attrib.get('label')
                         sheet_name = get_real_sheet_name(excel_path, sheet_name)  # TODO
@@ -1229,7 +1229,7 @@ def xml2excel(cover_map={}, xml_path=None, excel_path=None, lists={}, nodemaplis
                 log.logger.debug("写入参数配置表 sheet失败……")
 
         except Exception as e:
-            log.logger.error("Error 写入参数配置表 sheet失败……", e.args, e.__traceback__.tb_lineno)
+            log.logger.error("Error 写入参数配置表 sheet失败……"+ e.args+"  "+ e.__traceback__.tb_lineno)
             if e.args.__contains__('Permission denied'):
                 log.logger.error("Error: 【请关闭待写入的excel】")
             return False
@@ -1238,7 +1238,7 @@ def xml2excel(cover_map={}, xml_path=None, excel_path=None, lists={}, nodemaplis
         log.logger.debug("this time xml2excel execute is fine")
         return re
     except Exception as e:
-        log.logger.error('Error 解析xml出错了……', e.args, e.__traceback__.tb_lineno)
+        log.logger.error('Error 解析xml出错了……'+e.args+"  "+ e.__traceback__.tb_lineno)
         return False
 
 
@@ -1562,7 +1562,7 @@ def main(excel_path, exclude_app, dirs, new_excel_path):
 
     for f in map:
         curpath = map[f][4]
-        log.logger.debug(f, ':', '【' + curpath + '】')
+        log.logger.debug('【' + curpath + '】')
         try:
             z = zipfile.ZipFile(curpath, "r")
             result = deal_zip(z, curpath, excel_path, map[f], nodemaplist, packagelist, exclude_app, filter_map,
@@ -1577,12 +1577,12 @@ def main(excel_path, exclude_app, dirs, new_excel_path):
         except Exception as e:
             fail_count = fail_count + 1
             fail.append(curpath)
-            log.logger.error('Error:', e.args, e.__traceback__.tb_lineno)
+            log.logger.error('Error:'+ e.args +" " +e.__traceback__.tb_lineno)
             log.logger.debug('文件：【' + curpath + '】读取失败，本次跳过……')
             continue
 
-    log.logger.debug("nodemaplist", nodemaplist)
-    log.logger.debug("packagelist", packagelist)
+    log.logger.debug("nodemaplist: "+ nodemaplist)
+    log.logger.debug("packagelist: "+packagelist)
 
     write_excel_node(excel_path, "方案名称", nodemaplist)
     write_excel_package(excel_path, "安装包列表", packagelist)
