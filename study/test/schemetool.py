@@ -3,6 +3,7 @@ import json
 import os
 import sys
 import time
+import traceback
 import xml.etree.ElementTree as ET
 import zipfile
 import pandas as pd
@@ -69,7 +70,8 @@ def load_conf(path='./conf/conf.ini'):
         log.logger.debug("配置文件中：生成方案的sheet页顺序：")
         log.logger.debug(config.get("order", "sheet"))
 
-    except:
+    except Exception as e:
+            log.logger.error("e: " + traceback.format_exc())
         log.logger.error('Error: 加载失败，请检查配置文件conf/conf.ini……')
         time.sleep(1)
         sys.exit('end……')
@@ -118,6 +120,7 @@ def conf_xml2excel(xml_path=None, excel_path=None, curpath=None, map={}):
             map[key] = val
             return True
     except Exception as e:
+            log.logger.error("e: " + traceback.format_exc())
         log.logger.error('Error: 解析xml出错了……')
         return False
 
@@ -192,7 +195,8 @@ def conf_json2excel(json_path=None, curpath=None, map={}):
                 map[key] = curpath + "##" + version
                 return True
 
-        except:
+        except Exception as e:
+            log.logger.error("e: " + traceback.format_exc())
             log.logger.debug("conf_json2excel() 方法读取json文件失败……")
         f.close()
         return False
@@ -273,6 +277,7 @@ def conf_main(dirss, excel_path):
                         fail.append(curpath)
 
                 except Exception as e:
+            log.logger.error("e: " + traceback.format_exc())
                     fail_count = fail_count + 1
                     fail.append(curpath)
                     log.logger.error('Error:' + str(e.args))
@@ -394,6 +399,7 @@ def deal_json_params(excel_path="", package_list=[], info_dict=None, nodemaplist
             log.logger.debug("写入参数配置表 sheet失败……")
         return re
     except Exception as e:
+            log.logger.error("e: " + traceback.format_exc())
         log.logger.error("Error 写入参数配置表 sheet失败……"+ e.args+"   "+ e.__traceback__.tb_lineno)
         if e.args.__contains__('Permission denied'):
             log.logger.error("Error: 【请关闭待写入的excel】")
@@ -420,6 +426,7 @@ def json2excel(excel_path="", package_list=[], json_path=None, nodemaplist=[], l
                 log.logger.debug("json参数为空，不再处理……")
                 return False
         except Exception as e:
+            log.logger.error("e: " + traceback.format_exc())
             log.logger.error('Error  json 参数处理失败……'+ e.args+"  "+ e.__traceback__.tb_lineno)
         f.close()
         return False
@@ -749,6 +756,7 @@ def write_excel_node(path, sheet_name, listmap=[]):
         log.logger.debug('方案名称 sheet 写入成功……')
         return True
     except Exception as e:
+            log.logger.error("e: " + traceback.format_exc())
         log.logger.error('Error 方案名称 sheet 写入失败……'+ e.args+"  "+ e.__traceback__.tb_lineno)
         if e.args.__contains__('Permission denied'):
             log.logger.error("Error: 【请关闭待写入的excel】")
@@ -867,6 +875,7 @@ def deal_grid_params(excel_path=None, grid_tag=None, sheet_name=None, deal_flag=
             log.logger.debug(grid_name+ " grid sheet写入失败……")
             return False
     except Exception as e:
+            log.logger.error("e: " + traceback.format_exc())
         log.logger.error("Error" + grid_name + " grid sheet写入失败……" +e.args+ "   "+ e.__traceback__.tb_lineno)
         if e.args.__contains__('Permission denied'):
             log.logger.error("Error: 【请关闭待写入的excel】")
@@ -908,6 +917,7 @@ def write_excel_append(path, sheet_name, dateframe=None):
         workbook.close()
         return True
     except Exception as e:
+            log.logger.error("e: " + traceback.format_exc())
         log.logger.error("Error 参数配置表sheet 写入失败…… "+ e.args+"  "+ e.__traceback__.tb_lineno)
         if e.args.__contains__('Permission denied'):
             log.logger.error("Error: 【请关闭待写入的excel】")
@@ -925,7 +935,8 @@ def r_find_all(root_tag, target='field', type=None):
     if root_tag is None or target is None: return []
     try:
         lists = list(root_tag.iter())  # 当前根节点对应的所有子元素包含当前标签
-    except:
+    except Exception as e:
+            log.logger.error("e: " + traceback.format_exc())
         lists = []
         log.logger.debug("子节点为空……")
 
@@ -971,6 +982,7 @@ def write_excel_package(excel_path=None, sheet_name="安装包列表", packageli
         log.logger.debug("安装包列表 sheet写入成功……")
         return True
     except Exception as e:
+            log.logger.error("e: " + traceback.format_exc())
         log.logger.error("Error 安装包列表sheet写入失败……"+ e.args+"  "+ e.__traceback__.tb_lineno)
         if e.args.__contains__('Permission denied'):
             log.logger.error("Error: 【请关闭待写入的excel】")
@@ -1229,6 +1241,7 @@ def xml2excel(cover_map={}, xml_path=None, excel_path=None, lists={}, nodemaplis
                 log.logger.debug("写入参数配置表 sheet失败……")
 
         except Exception as e:
+            log.logger.error("e: " + traceback.format_exc())
             log.logger.error("Error 写入参数配置表 sheet失败……"+ e.args+"  "+ e.__traceback__.tb_lineno)
             if e.args.__contains__('Permission denied'):
                 log.logger.error("Error: 【请关闭待写入的excel】")
@@ -1238,6 +1251,7 @@ def xml2excel(cover_map={}, xml_path=None, excel_path=None, lists={}, nodemaplis
         log.logger.debug("this time xml2excel execute is fine")
         return re
     except Exception as e:
+            log.logger.error("e: " + traceback.format_exc())
         log.logger.error('Error 解析xml出错了……'+e.args+"  "+ e.__traceback__.tb_lineno)
         return False
 
@@ -1317,7 +1331,8 @@ def create_global_var_sheet(path="F:\\test\\test.xlsx"):
         copySheet("全局变量配置页", "全局参数", path)
         hidden_sheet(path, "全局变量配置页")
         log.logger.debug("复制全局变量sheet页成功……")
-    except:
+    except Exception as e:
+            log.logger.error("e: " + traceback.format_exc())
         log.logger.error("Error: 复制全局变量sheet页失败……")
 
 
@@ -1522,7 +1537,8 @@ def main(excel_path, exclude_app, dirs, new_excel_path):
         try:
             os.remove(excel_path)
 
-        except:
+        except Exception as e:
+            log.logger.error("e: " + traceback.format_exc())
             log.logger.error("Error: 请关闭打开的excel文件后重试……")
             return
     shutil.copy(old_path, excel_path)
@@ -1575,6 +1591,7 @@ def main(excel_path, exclude_app, dirs, new_excel_path):
                 fail.append(curpath)
 
         except Exception as e:
+            log.logger.error("e: " + traceback.format_exc())
             fail_count = fail_count + 1
             fail.append(curpath)
             log.logger.error('Error:'+ e.args +" " +e.__traceback__.tb_lineno)

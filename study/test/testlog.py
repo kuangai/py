@@ -1,6 +1,7 @@
 
 import logging
 from logging import handlers
+import traceback
 
 class Logger(object):
     level_relations = {
