@@ -213,6 +213,7 @@ def xml2excel(xml_path=None, excel_path=None, curpath=None, map={}):
             appName = basic.find('appName').text
             version = str(basic.find("vrsion").text).strip()
             key = systemType + '#' + appType + "#" + appName + "#"
+
             val = curpath + "##" +  version
             map[key] = val
             return map
