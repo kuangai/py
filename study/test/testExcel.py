@@ -4,7 +4,8 @@ import json
 import pandas as pd
 
 from openpyxl import load_workbook
-
+import openpyxl
+from openpyxl.utils import get_column_letter
 
 def write_excel_append(path, sheet_name, dateframe=None):
     # 参数说明: [变量顺序可改变，依次是：sheet页对象，要写入的dataframe对象，从哪一行开始写入]
@@ -152,4 +153,13 @@ def func_openpyxl_modify_excel(excel_path):
 if __name__ == '__main__':
     #  hidden_sheet()
     #  read_excel()
-    func_openpyxl_modify_excel("D://test//test1.xlsx")
+    # func_openpyxl_modify_excel("D://test//test1.xlsx")
+
+
+    workbook = openpyxl.load_workbook('test.xlsx')
+    worksheet = workbook['参数配置表']
+
+    FullRange = "A1:" + get_column_letter(worksheet.max_column) + str(worksheet.max_row)
+    worksheet.auto_filter.ref = FullRange
+
+    workbook.save('test.xlsx')
