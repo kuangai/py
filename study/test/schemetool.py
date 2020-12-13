@@ -1631,9 +1631,13 @@ def main(excel_path, exclude_app, dirs, new_excel_path, package_type):
             continue
 
     if len(checks) > 0:
-        log.logger.critical('以下安装包路径填写错误，请检查……')
-        log.logger.critical(checks)
-        return False
+        log.logger.critical('以下安装包未找到对应的路径，本次跳过……')
+        for path in checks:
+            log.logger.critical('本次跳过：【'+ path + '】')
+        if len(map.keys()) == len(checks):
+            log.logger.critical('所有安装包未找到对应的路径，程序退出·……')
+            return False
+        # return False
 
     if check_default_parameter_config(excel_path):
         log.logger.critical('请先修改默认参数配置页中的异常配置...')
@@ -1651,7 +1655,9 @@ def main(excel_path, exclude_app, dirs, new_excel_path, package_type):
 
     for f in map:
         curpath = map[f][4]
-        log.logger.debug('【' + curpath + '】')
+        if not os.path.exists(curpath.decode("utf-8")):
+            continue
+        log.logger.info('正在处理：【' + curpath + '】')
         try:
             z = zipfile.ZipFile(curpath.decode("utf-8"), "r")
             result = deal_zip(z, curpath, excel_path, map[f], nodemaplist, packagelist, exclude_app, filter_map,
