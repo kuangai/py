@@ -336,7 +336,7 @@ def conf_main(dirss, excel_path, package_type):
                     fail_count = fail_count + 1
                     fail.append(curpath)
                     log.logger.critical(str(e.args))
-                    log.logger.critical('文件：【' + curpath + '】读取失败，本次跳过……')
+                    log.logger.critical('文件：【' + curpath + '】读取失败，程序退出……')
                     time.sleep(3)
                     sys.exit("end……")
 
@@ -374,7 +374,8 @@ def conf_main(dirss, excel_path, package_type):
         cols_list.append(str(zipmap.get(key.decode("utf-8"))).split("##")[0])
     log.logger.info("生成方案配置详细信息如下……")
     for key in sheetmap.keys():
-        log.logger.info("[" + str(sheetmap.get(key)[0]) + ", " + str(sheetmap.get(key)[1]) + ", " + str(sheetmap.get(key)[2]) + ", " +
+        log.logger.info("[" + str(sheetmap.get(key)[0]) + ", " + str(sheetmap.get(key)[1]) + ", " + str(
+            sheetmap.get(key)[2]) + ", " +
                         str(sheetmap.get(key)[3]) + ", " + str(sheetmap.get(key)[4]) + "] ")
 
     return sheetmap
@@ -1631,9 +1632,9 @@ def main(excel_path, exclude_app, dirs, new_excel_path, package_type):
             continue
 
     if len(checks) > 0:
-        log.logger.critical('以下安装包未找到对应的路径，本次跳过……')
+        log.logger.info('以下安装包未找到对应的路径，本次跳过……')
         for path in checks:
-            log.logger.critical('本次跳过：【'+ path + '】')
+            log.logger.info('应用：【' + path + '】安装包未找到，本次跳过……')
         if len(map.keys()) == len(checks):
             log.logger.critical('所有安装包未找到对应的路径，程序退出·……')
             return False
