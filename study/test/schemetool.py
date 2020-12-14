@@ -773,21 +773,6 @@ def deal_database_param(databases=None, params=None, systemType=None, appType=No
                             params.append(one)
 
 
-def excel2map(path='D:\\test\\test.xlsx', sheet_name='默认参数配置页', k_col_index=3, v_col_index=4):
-    """
-    excel2map
-    :param k_col_index:
-    :param v_col_index:
-    :return:
-    """
-
-    workbook = load_workbook(path)
-    worksheet = workbook[sheet_name]
-    modify_sheet_col_width(worksheet)
-    workbook.close()
-    sys.exit()
-
-
 def hidden_sheet(path='D:\\test\\test.xlsx', sheet_name='方案名称'):
     workbook = load_workbook(path)  # 打开要写入数据的工作簿
     if sheet_name in workbook.sheetnames:
@@ -1476,7 +1461,7 @@ def appname2paramsmap(path='F:\\test\\test.xlsx', sheet_name='参数配置表', 
             tmp = worksheet.cell(row=i + 1, column=k_col_index).value
             if tmp is None:
                 tmp = ""
-            key = key + str(tmp).strip() + "#"
+            key = key + tmp.strip() + "#"
 
         if key.__contains__(":auth"):
             key = key + str(worksheet.cell(row=i + 1, column=7).value).split("#")[0] + "#"
@@ -1555,8 +1540,8 @@ def modify_parameter_config(cover_map=None, params=[], app_name=""):
                 key = key + str(param["参数值"]).split("#")[0] + "#"
 
             params_keys[key] = True
-            if app_param_map.get(key.encode("utf-8")) is not None:
-                value_list = app_param_map.get(key.encode("utf-8"))  # 覆盖掉旧参数
+            if app_param_map.get(key) is not None:
+                value_list = app_param_map.get(key)  # 覆盖掉旧参数
                 convert_params(param, value_list)
 
     for k in app_param_map.keys():
