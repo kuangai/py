@@ -1,5 +1,5 @@
+# -*- coding: UTF-8 -*-
 import configparser
-import datetime
 import json
 import os
 import sys
@@ -14,6 +14,10 @@ import shutil
 import logging
 from logging import handlers
 from openpyxl.utils import get_column_letter
+import io
+
+reload(sys)
+sys.setdefaultencoding('UTF-8')
 
 
 class Logger(object):
@@ -36,7 +40,7 @@ class Logger(object):
         sh = logging.StreamHandler()  # 往屏幕上输出
         sh.setFormatter(format_str)  # 设置屏幕上显示的格式
         th = handlers.TimedRotatingFileHandler(filename=filename, when=when, backupCount=backCount,
-                                               encoding='utf-8')  # 往文件里写入#指定间隔时间自动生成文件的处理器
+                                               encoding='UTF-8')  # 往文件里写入#指定间隔时间自动生成文件的处理器
         # 实例化TimedRotatingFileHandler
         # interval是时间间隔，backupCount是备份文件的个数，如果超过这个个数，就会自动删除，when是间隔的时间单位，单位有以下几种：
         # S 秒
@@ -75,7 +79,7 @@ def load_conf(path='./conf/conf.ini'):
     # log.logger.debug('正在加载配置文件……')
     config = configparser.ConfigParser()
     try:
-        config.read(filenames=path, encoding='utf-8-sig')  # 搞不定就换 utf-8-sig
+        config.read(filenames=path, encoding='UTF-8-sig')  # 搞不定就换 UTF-8-sig
         # log.logger.debug(config.get("app", "exclude"))
         # log.logger.debug("配置文件中：生成方案的sheet页顺序：")
         # log.logger.debug(config.get("order", "sheet"))
@@ -98,7 +102,7 @@ def conf_xml2excel(xml_path=None, excel_path=None, curpath=None, map={}, package
         if xml_path == None or excel_path == None:
             return
 
-        with open(xml_path, 'tr', encoding='utf-8') as rf:
+        with io.open(xml_path, 'tr', encoding='UTF-8') as rf:
             tree = ET.parse(rf)
             root = tree.getroot()
             basic = root.find('basic')
@@ -200,7 +204,7 @@ def conf_sheet2map(path='F:\\test\\test.xlsx', sheet_name='部署包配置页', 
 def conf_json2excel(json_path=None, curpath=None, map={}, package_type=""):
     if json_path is None:
         return True
-    with open(json_path, 'r', encoding='utf-8', errors='ignore') as f:
+    with io.open(json_path, 'r', encoding='UTF-8', errors='ignore') as f:
         try:
             info_dict = json.load(f, strict=False)
             if info_dict and len(info_dict) > 0:
@@ -313,6 +317,7 @@ def conf_main(dirss, excel_path, package_type):
     zipmap = {}
     for (root, dirs, files) in os.walk(dirss):
         for f in files:
+            # f = f.decode('gbk').encode('utf8')
             curpath = os.path.join(root, f)
             if str(f).endswith('.zip'):
                 log.logger.debug('遍历的路径：【' + curpath + '】')
@@ -331,7 +336,7 @@ def conf_main(dirss, excel_path, package_type):
                     fail_count = fail_count + 1
                     fail.append(curpath)
                     log.logger.critical(str(e.args))
-                    log.logger.critical('文件：【' + curpath + '】读取失败，本次跳过……')
+                    log.logger.critical('文件：【' + curpath + '】读取失败，程序退出……')
                     time.sleep(3)
                     sys.exit("end……")
 
@@ -359,17 +364,19 @@ def conf_main(dirss, excel_path, package_type):
 
     log.logger.info("开始收集部署包中配置的路径……")
     for key in sheetmap.keys():
-        if zipmap.get(key) is None and str(zipmap.get(key)).strip() == "":
+        if zipmap.get(key.decode("utf-8")) is None and str(zipmap.get(key.decode("utf-8"))).strip() == "":
             app_name = key.split("#")[2]
             log.logger.error("Error: 应用【" + app_name + "】部署包不存在，请检查部署包路径……")
             time.sleep(3)
             sys.exit("end……")
 
         cols_list = sheetmap.get(key)
-        cols_list.append(str(zipmap.get(key)).split("##")[0])
+        cols_list.append(str(zipmap.get(key.decode("utf-8"))).split("##")[0])
     log.logger.info("生成方案配置详细信息如下……")
     for key in sheetmap.keys():
-        log.logger.info(sheetmap.get(key))
+        log.logger.info("[" + str(sheetmap.get(key)[0]) + ", " + str(sheetmap.get(key)[1]) + ", " + str(
+            sheetmap.get(key)[2]) + ", " +
+                        str(sheetmap.get(key)[3]) + ", " + str(sheetmap.get(key)[4]) + "] ")
 
     return sheetmap
 
@@ -466,7 +473,7 @@ def json2excel(excel_path="", package_list=[], json_path=None, nodemaplist=[], l
     """
     if json_path is None:
         return
-    with open(json_path, 'r', encoding='utf-8', errors='ignore') as f:
+    with io.open(json_path, 'r', encoding='UTF-8', errors='ignore') as f:
         try:
             info_dict = json.load(f, strict=False)
             if info_dict and len(info_dict) > 0:
@@ -537,12 +544,16 @@ def deal_inner_field(field1, support_param_types, params, systemType, appType, a
                         and (support_param_types.__contains__(field.attrib.get('type'))):
                     # 加入参数
                     one = {}
-                    if field.text is None:
+                    if field.text is None :
                         text = ""
                         if field.attrib.get("default") is not None:
                             text = field.attrib.get("default")
                     else:
                         text = field.text.strip()
+                        if text == "":
+                            if field.attrib.get("default") is not None:
+                                text = field.attrib.get("default")
+
 
                     one['参数值'] = text
                     one["一级类型"] = systemType
@@ -951,7 +962,7 @@ def write_excel_append(path, sheet_name, dateframe=None):
         if sheet_name in workbook.sheetnames:
             start_row = workbook[sheet_name].max_row
         else:
-            dateframe.to_excel(writer, sheet_name=sheet_name, index=False, header=True)
+            dateframe.to_excel(writer, sheet_name=sheet_name.decode("utf-8"), index=False, header=True)
             writer.save()
             writer.close()
             return True
@@ -1032,7 +1043,7 @@ def write_excel_package(excel_path=None, sheet_name="安装包列表", packageli
         if sheet_name in workbook.sheetnames:
             workbook.remove(workbook[sheet_name])
 
-        packagedf.to_excel(writer, sheet_name=sheet_name, index=False, header=True)
+        packagedf.to_excel(writer, sheet_name=sheet_name.decode("utf-8"), index=False, header=True)
         writer.save()
         workbook.close()
         log.logger.info("安装包列表 sheet写入成功……")
@@ -1067,7 +1078,7 @@ def xml2excel(cover_map={}, xml_path=None, excel_path=None, lists={}, nodemaplis
         params = []
         key = ""
 
-        with open(xml_path, 'tr', encoding='utf-8') as rf:
+        with io.open(xml_path, 'tr', encoding='UTF-8') as rf:
             tree = ET.parse(rf)
             root = tree.getroot()
             basic = root.find('basic')
@@ -1392,7 +1403,7 @@ def copySheet(old_sheet_name="全局变量配置页", new_sheet_name="全局变�
 
 def create_global_var_sheet(path="F:\\test\\test.xlsx"):
     try:
-        copySheet("全局变量配置页", "全局参数", path)
+        copySheet(u"全局变量配置页", u"全局参数", path)
         hidden_sheet(path, "全局变量配置页")
         log.logger.debug("复制全局变量sheet页成功……")
     except Exception as e:
@@ -1620,14 +1631,18 @@ def main(excel_path, exclude_app, dirs, new_excel_path, package_type):
     checks = []
     for f in map:
         ppath = map[f][4]
-        if not os.path.exists(ppath):
+        if not os.path.exists(ppath.decode("utf-8")):
             checks.append(f.split("#")[2])
             continue
 
     if len(checks) > 0:
-        log.logger.critical('以下安装包路径填写错误，请检查……')
-        log.logger.critical(checks)
-        return False
+        log.logger.info('以下安装包未找到对应的路径，本次跳过……')
+        for path in checks:
+            log.logger.info('应用：【' + path + '】安装包未找到，本次跳过……')
+        if len(map.keys()) == len(checks):
+            log.logger.critical('所有安装包未找到对应的路径，程序退出·……')
+            return False
+        # return False
 
     if check_default_parameter_config(excel_path):
         log.logger.critical('请先修改默认参数配置页中的异常配置...')
@@ -1645,9 +1660,11 @@ def main(excel_path, exclude_app, dirs, new_excel_path, package_type):
 
     for f in map:
         curpath = map[f][4]
-        log.logger.debug('【' + curpath + '】')
+        if not os.path.exists(curpath.decode("utf-8")):
+            continue
+        log.logger.info('正在处理：【' + curpath + '】')
         try:
-            z = zipfile.ZipFile(curpath, "r")
+            z = zipfile.ZipFile(curpath.decode("utf-8"), "r")
             result = deal_zip(z, curpath, excel_path, map[f], nodemaplist, packagelist, exclude_app, filter_map,
                               cover_map)
             if result:
@@ -1700,11 +1717,12 @@ if __name__ == '__main__':
     log.logger.info("-----------------------   begin   -----------------------")
     log.logger.info("---------------------------------------------------------")
     for i in range(0, len(sys.argv)):
-        log.logger.info(sys.argv[i])
+        log.logger.info(sys.argv[i].decode('gbk').encode('utf8'))
     if len(sys.argv) >= 4 and sys.argv[1].endswith('.xlsx'):
-        excel_path = sys.argv[1]
-        dirs = sys.argv[2]
-        new_excel_path = sys.argv[3]
+        excel_path = sys.argv[1].decode('gbk').encode('utf8').decode("utf-8")
+        dirs = sys.argv[2].decode('gbk').encode('utf8').decode("utf-8")
+        new_excel_path = sys.argv[3].decode('gbk').encode('utf8').decode("utf-8")
+
         package_type = "oracle"
         if len(sys.argv) >= 5:
             tmp_type = sys.argv[4]
@@ -1750,4 +1768,8 @@ if __name__ == '__main__':
     time1 = time.time()
     main(excel_path, exclude_app, dirs, new_excel_path, package_type)
     time2 = time.time()
-    log.logger.info('---end---spent time: ' + str(int(time2 - time1)) + 's')
+    log.logger.info("---------------------------------------------------------")
+    log.logger.info("------------------------   end   ------------------------")
+    log.logger.info("---------------------------------------------------------")
+    log.logger.info('--------------------- spent time: ' + str(int(time2 - time1)) + ' s  -----------------')
+    log.logger.info("---------------------------------------------------------")

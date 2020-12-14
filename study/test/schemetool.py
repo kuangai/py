@@ -544,12 +544,16 @@ def deal_inner_field(field1, support_param_types, params, systemType, appType, a
                         and (support_param_types.__contains__(field.attrib.get('type'))):
                     # 加入参数
                     one = {}
-                    if field.text is None:
+                    if field.text is None :
                         text = ""
                         if field.attrib.get("default") is not None:
                             text = field.attrib.get("default")
                     else:
                         text = field.text.strip()
+                        if text == "":
+                            if field.attrib.get("default") is not None:
+                                text = field.attrib.get("default")
+
 
                     one['参数值'] = text
                     one["一级类型"] = systemType
@@ -714,7 +718,7 @@ def deal_database_param(databases=None, params=None, systemType=None, appType=No
                         one["参数类型"] = "数据库"
                         one["参数新增时间"] = ''
                         isfilter = filter_map.get(str(appName + "#" + nodeId + "#" + one["参数"] + "#"))
-                        if isfilter is None or isfilter is not True:
+                        if enables.__ne__("false") and (isfilter is None or isfilter is not True):
                             params.append(one)
 
                     host = database.attrib.get("host")
@@ -1551,12 +1555,12 @@ def modify_parameter_config(cover_map=None, params=[], app_name=""):
                 key = key + str(param["参数值"]).split("#")[0] + "#"
 
             params_keys[key] = True
-            if app_param_map.get(key) is not None:
-                value_list = app_param_map.get(key)  # 覆盖掉旧参数
+            if app_param_map.get(key.encode("utf-8")) is not None:
+                value_list = app_param_map.get(key.encode("utf-8"))  # 覆盖掉旧参数
                 convert_params(param, value_list)
 
     for k in app_param_map.keys():
-        if params_keys.get(k) is None:
+        if params_keys.get(k.decode("utf-8")) is None:
             param = {}
             value_list = app_param_map.get(k)  # 覆盖掉旧参数
             convert_params(param, value_list)
