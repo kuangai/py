@@ -1,7 +1,8 @@
 #-*- coding:utf-8 -*-
-
-import redis   # 导入redis 模块
-
-r = redis.Redis(host='10.20.32.240',password='redis@123', port=26380)
-
-print r.get('a')
+import argparse
+parser = argparse.ArgumentParser(description='manual to this script')
+parser.add_argument('--conf_path', type=str, default = None)
+parser.add_argument('--scheme_path', type=str, default = None)
+parser.add_argument('--package_path', type=int, default=32)
+args = parser.parse_args()
+print(args.conf_path)

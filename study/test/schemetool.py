@@ -64,7 +64,7 @@ def modify_sheet_col_width(path, sheet_name):
         sheet.column_dimensions['B'].width = 20
         sheet.column_dimensions['C'].width = 35
         sheet.column_dimensions['D'].width = 25
-        sheet.column_dimensions['E'].width = 30
+        sheet.column_dimensions['E'].width = 15
         sheet.column_dimensions['F'].width = 35
         sheet.column_dimensions['G'].width = 30
         sheet.column_dimensions['H'].width = 20
@@ -1006,6 +1006,8 @@ def r_find_all(root_tag, target='field', type=None):
 
 def write_excel_package(excel_path=None, sheet_name="安装包列表", packagelist=[]):
     packagedf = DataFrame(columns=('部署包类型', '一级类型', '二级类型', '应用名称', '安装顺序', '部署包名称', '最低兼容版本', '最高兼容版本'))  # 生成空的pandas表
+
+    packagelist = sorted(packagelist, key=lambda e: str(e.__getitem__('安装顺序')) + e.__getitem__('应用名称'))
 
     try:
         writer = pd.ExcelWriter(excel_path, engine='openpyxl', mode='a')  # 用于首次写入还可自动加表头
