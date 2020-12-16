@@ -521,7 +521,7 @@ def deal_inner_field_self(field, params, systemType, appType, appName, nodeId, f
         zgfiledtime = ""
     one["参数新增时间"] = zgfiledtime
     isfilter = filter_map.get(str(appName + "#" + one["节点id"] + "#" + one["参数"] + "#"))
-    if text.strip() != "" and (isfilter is None or isfilter is not True):
+    if (isfilter is None or isfilter is not True):
         params.append(one)
 
 
@@ -572,7 +572,7 @@ def deal_inner_field(field1, support_param_types, params, systemType, appType, a
                         zgfiledtime = ""
                     one["参数新增时间"] = zgfiledtime
                     isfilter = filter_map.get(str(appName + "#" + one["节点id"] + "#" + one["参数"] + "#"))
-                    if text.strip() != "" and (isfilter is None or isfilter is not True):
+                    if (isfilter is None or isfilter is not True):
                         params.append(one)
 
                 else:
@@ -824,7 +824,6 @@ def deal_node_params(node=None, params=None, systemType=None, appType=None, appN
     fields = variables.findall('field')
     for field in fields:
         if field is not None \
-                and field.text is not None and str(field.text).strip() != "" \
                 and field.attrib.get('type') is not None \
                 and support_param_types.__contains__(field.attrib.get('type')):
             one = {}
@@ -1129,7 +1128,6 @@ def xml2excel(cover_map={}, xml_path=None, excel_path=None, lists={}, nodemaplis
                 fields = global_variables.findall('field')
                 for field in fields:
                     if field is not None \
-                            and field.text is not None and str(field.text).strip() != "" \
                             and field.attrib.get('type') is not None \
                             and support_param_types.__contains__(field.attrib.get('type')):
                         one = {}
@@ -1224,7 +1222,6 @@ def xml2excel(cover_map={}, xml_path=None, excel_path=None, lists={}, nodemaplis
                         nodemap['user'] = field.text.strip()
 
                     if field is not None \
-                            and field.text is not None and str(field.text).strip() != "" \
                             and field.attrib.get('type') is not None \
                             and support_param_types.__contains__(field.attrib.get('type')):
                         one = {}
@@ -1276,6 +1273,8 @@ def xml2excel(cover_map={}, xml_path=None, excel_path=None, lists={}, nodemaplis
         try:
             for k in range(0, len(params)):
                 var = params[k]
+                if var["参数值"] is None  or var["参数值"].strip() == "":
+                    continue
                 s = []
                 s.append(str(var['一级类型']).strip())
                 s.append(str(var['二级类型']).strip())
