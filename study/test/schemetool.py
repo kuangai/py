@@ -91,25 +91,31 @@ def add_comment(parent_map={}, path='F:\\test\\test.xlsx', sheet_name='参数配
     return True
 
 
-def modify_sheet_col_width(path, sheet_name):
+def modify_sheet_col_width(path):
+    t1 = time.time()
+    sheet_list = ['参数配置表','安装包列表','全局参数']
+
     workbook = load_workbook(path)  # 打开要写入数据的工作簿
-    if sheet_name in workbook.sheetnames:
-        sheet = workbook[sheet_name]  # 打开要编辑的工作表
-        FullRange = "A1:" + get_column_letter(sheet.max_column) + str(sheet.max_row)
-        sheet.auto_filter.ref = FullRange
-        sheet.column_dimensions['A'].width = 20
-        sheet.column_dimensions['B'].width = 20
-        sheet.column_dimensions['C'].width = 35
-        sheet.column_dimensions['D'].width = 25
-        sheet.column_dimensions['E'].width = 15
-        sheet.column_dimensions['F'].width = 35
-        sheet.column_dimensions['G'].width = 30
-        sheet.column_dimensions['H'].width = 20
-        sheet.column_dimensions['I'].width = 10
-        sheet.column_dimensions['J'].width = 20
-        sheet.column_dimensions['K'].width = 20
-    workbook.save(path)
-    workbook.close()
+    for sheet_name in sheet_list:
+        if sheet_name in workbook.sheetnames:
+            sheet = workbook[sheet_name]  # 打开要编辑的工作表
+            FullRange = "A1:" + get_column_letter(sheet.max_column) + str(sheet.max_row)
+            sheet.auto_filter.ref = FullRange
+            sheet.column_dimensions['A'].width = 20
+            sheet.column_dimensions['B'].width = 20
+            sheet.column_dimensions['C'].width = 35
+            sheet.column_dimensions['D'].width = 25
+            sheet.column_dimensions['E'].width = 15
+            sheet.column_dimensions['F'].width = 35
+            sheet.column_dimensions['G'].width = 30
+            sheet.column_dimensions['H'].width = 20
+            sheet.column_dimensions['I'].width = 10
+            sheet.column_dimensions['J'].width = 20
+            sheet.column_dimensions['K'].width = 20
+            workbook.save(path)
+            workbook.close()
+    t2 = time.time()
+    log.logger.info("调整列宽并设置表头过滤spent time: " + str(t2-t1) + "s")
 
 
 def load_conf(path='./conf/conf.ini'):
@@ -345,6 +351,7 @@ def conf_deal_zip(zip=None, zip_name='', excel_path=None, map={}, package_type="
 
 
 def conf_main(dirss, excel_path, package_type):
+    t1 = time.time()
     log.logger.info("开始处理目录，通过目录下部署包更新方案配置……")
     succ = []
     fail = []
@@ -415,13 +422,15 @@ def conf_main(dirss, excel_path, package_type):
             sheetmap.get(key)[2]) + ", " +
                         str(sheetmap.get(key)[3]) + ", " + str(sheetmap.get(key)[4]) + "] ")
 
+    t2 = time.time()
+    log.logger.info("自动匹配安装包路径完成 spent time：" + str(t2-t1) + "s……")
     return sheetmap
 
 
 def deal_json_params(excel_path="", package_list=[], info_dict=None, nodemaplist=[], lists={}, cover_map={}):
     if info_dict is None:
         return True
-
+    t1 = time.time()
     systemType = info_dict["basic"]["systemType"]
     version = info_dict["basic"]["version"]
     appType = info_dict["basic"]["appType"]
@@ -489,7 +498,8 @@ def deal_json_params(excel_path="", package_list=[], info_dict=None, nodemaplist
         log.logger.debug("开始写入参数配置表 sheet……")
         re = write_excel_append(excel_path, sheet_name, paramsdf)
         if re:
-            log.logger.info("写入参数配置表 sheet成功……")
+            t2 = time.time()
+            log.logger.info("【" + appName + "】写入参数配置表 sheet成功 spent time: " + str(t2-t1) + "s……")
         else:
             log.logger.info("写入参数配置表 sheet失败……")
         return re
@@ -829,16 +839,22 @@ def deal_database_param(databases=None, params=None, systemType=None, appType=No
                             params.append(one)
 
 
-def hidden_sheet(path='D:\\test\\test.xlsx', sheet_name='方案名称'):
+def hidden_sheet(path='D:\\test\\test.xlsx'):
+    t1 = time.time()
+    hidden_list = ['全局变量配置页', '部署包配置页', '默认参数配置页']
     workbook = load_workbook(path)  # 打开要写入数据的工作簿
-    if sheet_name in workbook.sheetnames:
-        sheet = workbook[sheet_name]  # 打开要编辑的工作表
-        sheet.sheet_state = 'hidden'
+    for sheet_name in hidden_list:
+        if sheet_name in workbook.sheetnames:
+            sheet = workbook[sheet_name]  # 打开要编辑的工作表
+            sheet.sheet_state = 'hidden'
     workbook.save(path)
     workbook.close()
+    t2 = time.time()
+    log.logger.info("隐藏sheet  spent time: " + str(t2 - t1) + "s")
 
 
 def write_excel_node(path, sheet_name, listmap=[]):
+    t1 = time.time()
     if len(listmap) == 0:
         return True
     try:
@@ -859,7 +875,8 @@ def write_excel_node(path, sheet_name, listmap=[]):
             #  sheet.cell(row=3, column=j + 6, value=listmap[j]['selected'])
         workbook.save(path)
         workbook.close()
-        log.logger.info('方案名称 sheet 写入成功……')
+        t2 = time.time()
+        log.logger.info("【方案名称】 sheet写入成功spent time: " + str(t2 - t1) + "s……")
         return True
     except Exception as e:
         log.logger.critical(traceback.format_exc())
@@ -868,6 +885,7 @@ def write_excel_node(path, sheet_name, listmap=[]):
             log.logger.critical("Error: 【请关闭待写入的excel】")
         time.sleep(3)
         sys.exit("end……")
+
 
 
 def deal_node_params(parent_map={}, node=None, params=None, systemType=None, appType=None, appName=None, nodeId=None,
@@ -1060,6 +1078,7 @@ def r_find_all(root_tag, target='field', type=None):
 
 
 def write_excel_package(excel_path=None, sheet_name="安装包列表", packagelist=[]):
+    t1 = time.time()
     packagedf = DataFrame(columns=('部署包类型', '一级类型', '二级类型', '应用名称', '安装顺序', '部署包名称', '最低兼容版本', '最高兼容版本'))  # 生成空的pandas表
 
     packagelist = sorted(packagelist, key=lambda e: str(e.__getitem__('安装顺序')) + e.__getitem__('应用名称'))
@@ -1088,7 +1107,8 @@ def write_excel_package(excel_path=None, sheet_name="安装包列表", packageli
         packagedf.to_excel(writer, sheet_name=sheet_name.decode("utf-8"), index=False, header=True)
         writer.save()
         workbook.close()
-        log.logger.info("安装包列表 sheet写入成功……")
+        t2 = time.time()
+        log.logger.info("【安装包列表】 sheet写入成功spent time: " + str(t2 - t1) + "s……")
         return True
     except Exception as e:
         log.logger.critical(traceback.format_exc())
@@ -1111,7 +1131,7 @@ def xml2excel(parent_map={}, cover_map={}, xml_path=None, excel_path=None, lists
     :param nodemaplist 每次解析时补充节点的信息到列表，用于最后补入 方案名称sheet
     :return: 处理结果
     """
-
+    t1 = time.time()
     exclude_app_list = exclude_app.split(";")
 
     support_param_types = ['password', 'input', 'select', 'timestamp', 'switch', 'complexSelect']
@@ -1162,7 +1182,9 @@ def xml2excel(parent_map={}, cover_map={}, xml_path=None, excel_path=None, lists
                 if len(global_grid_fields) > 0:
                     log.logger.info(appName + ' 全局参数中对应的grid类型参数共【{}】个'.format(len(global_grid_fields)))
                     for grid in global_grid_fields:
-
+                        isfilter = filter_map.get(str(appName + "#" + "#" + grid.attrib.get('name') + "#"))
+                        if isfilter:
+                            continue
                         sheet_name = grid.attrib.get('label')
                         sheet_name = get_real_sheet_name(excel_path, sheet_name)  # TODO
                         grid_param = {'参数值': "grid：" + sheet_name, "一级类型": systemType, "二级类型": appType, "应用名称": appName,
@@ -1177,7 +1199,7 @@ def xml2excel(parent_map={}, cover_map={}, xml_path=None, excel_path=None, lists
                         if zgfiledtime is None:
                             zgfiledtime = ""
                         grid_param["参数新增时间"] = zgfiledtime
-                        isfilter = filter_map.get(str(appName + "#" + "#" + grid_param["参数"] + "#"))
+
                         if isfilter is None or isfilter is not True:
                             params.append(grid_param)
                             deal_grid_params(excel_path, grid, sheet_name, deal_flag)
@@ -1245,7 +1267,13 @@ def xml2excel(parent_map={}, cover_map={}, xml_path=None, excel_path=None, lists
                 if len(grid_fields) > 0:
                     log.logger.info(
                         appName + ' 当前节点【{}】对应的grid类型参数共【{}】个'.format(system.attrib.get('id'), len(grid_fields)))
+                    time1 = time.time()
+
                     for grid in grid_fields:
+                        isfilter = filter_map.get(
+                            str(appName + "#" + system.attrib.get('id') + "#" + grid.attrib.get('name') + "#"))
+                        if isfilter:
+                            continue
                         sheet_name = grid.attrib.get('label')
                         sheet_name = get_real_sheet_name(excel_path, sheet_name)  # TODO
                         grid_param = {'参数值': "grid：" + sheet_name, "一级类型": systemType, "二级类型": appType, "应用名称": appName,
@@ -1260,12 +1288,12 @@ def xml2excel(parent_map={}, cover_map={}, xml_path=None, excel_path=None, lists
                         if zgfiledtime is None:
                             zgfiledtime = ""
                         grid_param["参数新增时间"] = zgfiledtime
-                        isfilter = filter_map.get(
-                            str(appName + "#" + grid_param["节点id"] + "#" + grid_param["参数"] + "#"))
+
                         if isfilter is None or isfilter is not True:
                             params.append(grid_param)
                             deal_grid_params(excel_path, grid, sheet_name, deal_flag)
-
+                    time2 = time.time()
+                    log.logger.info("【"+ appName + "】处理grid 参数 spent time："+ str(time2-time1) + "s")
                 # 私有节点参数
                 node = system.find('node')
 
@@ -1356,7 +1384,8 @@ def xml2excel(parent_map={}, cover_map={}, xml_path=None, excel_path=None, lists
             log.logger.info("开始写入参数配置表 sheet……")
             re = write_excel_append(excel_path, sheet_name, paramsdf)
             if re:
-                log.logger.info("写入参数配置表 sheet成功……")
+                t2 = time.time()
+                log.logger.info("【" + appName + "】写入参数配置表 sheet成功 spent time: " + str(t2 - t1) + "s……")
             else:
                 log.logger.error("写入参数配置表 sheet失败……")
 
@@ -1451,10 +1480,12 @@ def copySheet(old_sheet_name="全局变量配置页", new_sheet_name="全局变�
 
 
 def create_global_var_sheet(path="F:\\test\\test.xlsx"):
+    t1 = time.time()
     try:
         copySheet(u"全局变量配置页", u"全局参数", path)
-        hidden_sheet(path, "全局变量配置页")
         log.logger.debug("复制全局变量sheet页成功……")
+        t2 = time.time()
+        log.logger.info("复制【全局变量】sheet页成功……spent time: " + str(t2 - t1) + "s……")
     except Exception as e:
         log.logger.critical(traceback.format_exc())
         log.logger.critical("Error: 复制全局变量sheet页失败……")
@@ -1504,6 +1535,7 @@ def sheet2map(path='F:\\test\\test.xlsx', sheet_name='参数配置表', k_col_in
 
 # 每个应用的参数放在一起 map<app_name,params_map>  params_map<应用名#节点id#参数#，整行的值>
 def appname2paramsmap(path='F:\\test\\test.xlsx', sheet_name='参数配置表', k_col_indexs=[], isConfig=False, cols=10):
+    t1 = time.time()
     appname2params = {}
     workbook = load_workbook(path)
     worksheet = workbook[sheet_name]
@@ -1548,11 +1580,14 @@ def appname2paramsmap(path='F:\\test\\test.xlsx', sheet_name='参数配置表', 
     log.logger.debug("appname2params 读取【" + sheet_name + "】sheet页转为json如下：")
     workbook.close()
     log.logger.debug(appname2params)
+    t2 = time.time()
+    log.logger.info("读取cover_map完成 spent time：" + str(t2 - t1) + "s……")
     return appname2params
 
 
 # 将sheet页中的其中几列作为key（k_col_indexs控制列号集合），整行作为value
 def sheet2set(path='F:\\test\\test.xlsx', sheet_name='参数配置表', k_col_indexs=[]):
+    t1 = time.time()
     map = {}
     workbook = load_workbook(path)
     worksheet = workbook[sheet_name]
@@ -1573,6 +1608,8 @@ def sheet2set(path='F:\\test\\test.xlsx', sheet_name='参数配置表', k_col_in
     log.logger.debug("读取【" + sheet_name + "】sheet页转为set如下：")
     workbook.close()
     log.logger.debug(map)
+    t2 = time.time()
+    log.logger.info("读取filter_map完成 spent time：" + str(t2 - t1) + "s……")
     return map
 
 
@@ -1617,6 +1654,7 @@ def modify_parameter_config(cover_map=None, params=[], app_name=""):
 
 
 def check_default_parameter_config(excel_path):
+    t1 = time.time()
     map = sheet2map(excel_path, "默认参数配置页", [], False, 11)
     is_exception = False
     log.logger.info("检查默认参数配置页sheet...")
@@ -1628,6 +1666,8 @@ def check_default_parameter_config(excel_path):
                              + " 参数：" + str(map[line_num][4]).strip()
                              + " 所在行的 过滤/覆盖 列配置有误")
             is_exception = True
+    t2 = time.time()
+    log.logger.info("检查【默认参数配置页】sheet完成 spent time：" + str(t2 - t1) + "s……")
     return is_exception
 
 
@@ -1640,6 +1680,7 @@ def get_current_order(sheet_name, workbook):
 
 
 def adjustSheetOrder(excel_path):
+    t1 = time.time()
     workbook = load_workbook(excel_path)
     conf = load_conf()
     sheet_order = conf.get("sheet_order").split(";")
@@ -1653,6 +1694,8 @@ def adjustSheetOrder(excel_path):
             log.logger.error("sheet页‘" + sheet_order[tmp] + "’调整位置失败..")
     workbook.save(excel_path)
     workbook.close()
+    t2 = time.time()
+    log.logger.info("调整sheet顺序spent time: " + str(t2 - t1) + "s")
 
 
 def main(excel_path, exclude_app, dirs, new_excel_path, package_type):
@@ -1707,6 +1750,7 @@ def main(excel_path, exclude_app, dirs, new_excel_path, package_type):
     filter_map = sheet2set(excel_path, "默认参数配置页", [3, 4, 5])
     cover_map = appname2paramsmap(excel_path, "默认参数配置页", [3, 4, 5], True, 10)
     parent_map = {}  # 记录父级参数增加批注使用
+    t1 = time.time()
     for f in map:
         curpath = map[f][4]
         if not os.path.exists(curpath.decode("utf-8")):
@@ -1731,7 +1775,8 @@ def main(excel_path, exclude_app, dirs, new_excel_path, package_type):
             log.logger.critical('文件：【' + curpath + '】读取失败，本次跳过……')
             time.sleep(3)
             sys.exit("end……")
-
+    t2 = time.time()
+    log.logger.info("参数处理完成 spent time： " + str(t2-t1) + "s")
     log.logger.debug("nodemaplist: ")
     log.logger.debug(nodemaplist)
     log.logger.debug("packagelist: ")
@@ -1747,12 +1792,9 @@ def main(excel_path, exclude_app, dirs, new_excel_path, package_type):
         for s in succ:
             log.logger.info(s)
 
-    hidden_sheet(excel_path, '部署包配置页')
-    hidden_sheet(excel_path, '默认参数配置页')
+    hidden_sheet(excel_path)
     adjustSheetOrder(excel_path)
-    modify_sheet_col_width(excel_path, "参数配置表")
-    modify_sheet_col_width(excel_path, "安装包列表")
-    modify_sheet_col_width(excel_path, "全局参数")
+    modify_sheet_col_width(excel_path)
     add_comment(parent_map, excel_path, "参数配置表")
 
 
