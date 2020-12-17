@@ -15,6 +15,7 @@ import logging
 from logging import handlers
 from openpyxl.utils import get_column_letter
 import io
+from openpyxl.comments import Comment
 
 reload(sys)
 sys.setdefaultencoding('UTF-8')
@@ -52,6 +53,42 @@ class Logger(object):
         th.setFormatter(format_str)  # 设置文件里写入的格式
         self.logger.addHandler(sh)  # 把对象加到logger里
         self.logger.addHandler(th)
+
+
+#  加批注 该参数仅在上级开关【】开启后生效
+def add_comment(parent_map={}, path='F:\\test\\test.xlsx', sheet_name='参数配置表'):
+    if len(parent_map.keys()) > 0:
+        t1 = time.time()
+        log.logger.info("开始在【参数配置表】增加批注……")
+        log.logger.debug("开关父级参数映射关系如下：")
+        log.logger.debug(parent_map)
+        writer = pd.ExcelWriter(path, engine='openpyxl', mode='a')  # 用于首次写入还可自动加表头
+        workbook = load_workbook(path)  # 打开要写入数据的工作簿
+        writer.book = workbook
+        worksheet = workbook[sheet_name]
+
+        for i in range(1, worksheet.max_row):
+            systemType = str(worksheet.cell(row=i + 1, column=1).value)
+            appType = str(worksheet.cell(row=i + 1, column=2).value)
+            appName = str(worksheet.cell(row=i + 1, column=3).value)
+            nodeId = str(worksheet.cell(row=i + 1, column=4).value)
+            param = str(worksheet.cell(row=i + 1, column=5).value)
+            key = systemType + "#" + appType + "#" + appName + "#" + nodeId + "#" + param
+            parent_param = parent_map.get(key.decode("utf-8"))
+            if parent_param is not None and str(parent_param).strip() != "":
+                commonts = "该参数仅在上级开关【{}】开启后生效".format(parent_param)
+                comment = Comment(commonts, 'author')
+                comment.width = 200
+                comment.height = 100
+                worksheet["E" + str(i + 1)].comment = comment
+
+        writer.save()
+        writer.close()
+        t2 = time.time()
+        log.logger.info("【参数配置表】增加批注完成……")
+        log.logger.info("【参数配置表】增加批注spent time " + str(t2 - t1) + "s")
+
+    return True
 
 
 def modify_sheet_col_width(path, sheet_name):
@@ -528,16 +565,27 @@ def deal_inner_field_self(field, params, systemType, appType, appName, nodeId, f
         params.append(one)
 
 
-def deal_inner_field(field1, support_param_types, params, systemType, appType, appName, nodeId, filter_map):
+def deal_inner_field(parent_map, field1, support_param_types, params, systemType, appType, appName, nodeId, filter_map):
     listfield = []
-    listfield.append(field1)
+    field_map = {}
+    field_map["field"] = field1
+    field_map["parent"] = ""
+    listfield.append(field_map)
     while len(listfield) > 0:
-        tmpfield = listfield.pop(0)
-        if tmpfield.attrib.get("type") is not None and tmpfield.attrib.get('type') == "switchForm":
-            deal_inner_field_self(tmpfield, params, systemType, appType, appName, nodeId, filter_map)
-
+        tmpfieldmap = listfield.pop(0)
+        tmpfield = tmpfieldmap.get("field")
         if tmpfield is None:
             continue
+
+        parent_params = tmpfieldmap.get("parent")
+        next_parent_param = ''
+        if tmpfield.attrib.get("type") is not None and tmpfield.attrib.get('type') == "switchForm":
+            next_parent_param = tmpfield.attrib.get('name')
+            deal_inner_field_self(tmpfield, params, systemType, appType, appName, nodeId, filter_map)
+            if parent_params != "":
+                parent_map[systemType + "#" + appType + "#" + appName + "#" + nodeId + "#" + tmpfield.attrib.get(
+                    'name') + "#"] = parent_params
+
         innerfields = tmpfield.findall("field")
 
         if len(innerfields) > 0:
@@ -547,7 +595,7 @@ def deal_inner_field(field1, support_param_types, params, systemType, appType, a
                         and (support_param_types.__contains__(field.attrib.get('type'))):
                     # 加入参数
                     one = {}
-                    if field.text is None :
+                    if field.text is None:
                         text = ""
                         if field.attrib.get("default") is not None:
                             text = field.attrib.get("default")
@@ -557,7 +605,6 @@ def deal_inner_field(field1, support_param_types, params, systemType, appType, a
                             if field.attrib.get("default") is not None:
                                 text = field.attrib.get("default")
 
-
                     one['参数值'] = text
                     one["一级类型"] = systemType
                     one["二级类型"] = appType
@@ -565,6 +612,9 @@ def deal_inner_field(field1, support_param_types, params, systemType, appType, a
                     one["节点id"] = nodeId
                     one["参数"] = field.attrib.get('name')
                     one["参数说明"] = field.attrib.get('label')
+                    if next_parent_param != "":
+                        parent_map[systemType + "#" + appType + "#" + appName + "#" + nodeId + "#" + field.attrib.get(
+                            'name')] = next_parent_param
 
                     zgfieldtype = field.attrib.get('zgfieldtype')
                     if zgfieldtype is None or str(zgfieldtype) == '':
@@ -584,7 +634,10 @@ def deal_inner_field(field1, support_param_types, params, systemType, appType, a
                     # 其他类型，判断是否有嵌套
                     else:
                         if len(field.findall("field")) > 0:
-                            listfield.append(field)
+                            field_map = {}
+                            field_map["field"] = field
+                            field_map["parent"] = next_parent_param
+                            listfield.append(field_map)
 
         else:
             continue
@@ -817,7 +870,7 @@ def write_excel_node(path, sheet_name, listmap=[]):
         sys.exit("end……")
 
 
-def deal_node_params(node=None, params=None, systemType=None, appType=None, appName=None, nodeId=None,
+def deal_node_params(parent_map={}, node=None, params=None, systemType=None, appType=None, appName=None, nodeId=None,
                      support_param_types=None, filter_map={}):
     if node is None or nodeId is None:
         return
@@ -863,7 +916,7 @@ def deal_node_params(node=None, params=None, systemType=None, appType=None, appN
                 params.append(one)
         else:
             if field is not None and field.attrib.get("type") != 'grid':
-                deal_inner_field(field, support_param_types, params, systemType, appType, appName, nodeId,
+                deal_inner_field(parent_map, field, support_param_types, params, systemType, appType, appName, nodeId,
                                  filter_map)
 
 
@@ -1046,7 +1099,8 @@ def write_excel_package(excel_path=None, sheet_name="安装包列表", packageli
         sys.exit("end……")
 
 
-def xml2excel(cover_map={}, xml_path=None, excel_path=None, lists={}, nodemaplist=[], packagelist=[], filter_map={},
+def xml2excel(parent_map={}, cover_map={}, xml_path=None, excel_path=None, lists={}, nodemaplist=[], packagelist=[],
+              filter_map={},
               exclude_app=''):
     """
     xml数据以追加的方式转存excel
@@ -1159,7 +1213,8 @@ def xml2excel(cover_map={}, xml_path=None, excel_path=None, lists={}, nodemaplis
                             params.append(one)
                     else:
                         if field is not None and field.attrib.get("type") != 'grid':
-                            deal_inner_field(field, support_param_types, params, systemType, appType, appName, "",
+                            deal_inner_field(parent_map, field, support_param_types, params, systemType, appType,
+                                             appName, "",
                                              filter_map)
             # 节点参数
             subSystems = root.find('subSystems')
@@ -1253,12 +1308,13 @@ def xml2excel(cover_map={}, xml_path=None, excel_path=None, lists={}, nodemaplis
                             params.append(one)
                     else:
                         if field is not None and field.attrib.get("type") != 'grid':
-                            deal_inner_field(field, support_param_types, params, systemType, appType, appName,
+                            deal_inner_field(parent_map, field, support_param_types, params, systemType, appType,
+                                             appName,
                                              system.attrib.get('id'),
                                              filter_map)
 
                 if node is not None and system.attrib.get('id') is not None:
-                    deal_node_params(node, params, systemType, appType, appName, system.attrib.get('id'),
+                    deal_node_params(parent_map, node, params, systemType, appType, appName, system.attrib.get('id'),
                                      support_param_types, filter_map)
 
                 nodemaplist.append(nodemap)
@@ -1277,7 +1333,7 @@ def xml2excel(cover_map={}, xml_path=None, excel_path=None, lists={}, nodemaplis
         try:
             for k in range(0, len(params)):
                 var = params[k]
-                if var["参数值"] is None  or str(var["参数值"]).strip() == "":
+                if var["参数值"] is None or str(var["参数值"]).strip() == "":
                     continue
                 s = []
                 s.append(str(var['一级类型']).strip())
@@ -1321,7 +1377,8 @@ def xml2excel(cover_map={}, xml_path=None, excel_path=None, lists={}, nodemaplis
         sys.exit("end……")
 
 
-def deal_zip(zip=None, zip_name='', excel_path=None, lists={}, nodemaplist=[], packagelist=[], exclude_app='',
+def deal_zip(parent_map={}, zip=None, zip_name='', excel_path=None, lists={}, nodemaplist=[], packagelist=[],
+             exclude_app='',
              filter_map={}, cover_map={}):
     re = False
     if zip == None or excel_path == None:
@@ -1334,7 +1391,8 @@ def deal_zip(zip=None, zip_name='', excel_path=None, lists={}, nodemaplist=[], p
     if len(contains) > 0:
         log.logger.info('当前压缩文件【{}】存在deploy.xml，提取文件。'.format(zip_name))
         xml = zip.extract(contains[0], path=None, pwd=None)
-        re = xml2excel(cover_map, xml, excel_path, lists, nodemaplist, packagelist, filter_map, exclude_app)
+        re = xml2excel(parent_map, cover_map, xml, excel_path, lists, nodemaplist, packagelist, filter_map,
+                       exclude_app)
         os.remove(xml)
         log.logger.info('当前压缩文件【{}】处理完成！\n'.format(zip_name))
     elif len(contains_json) > 0:
@@ -1355,7 +1413,8 @@ def deal_zip(zip=None, zip_name='', excel_path=None, lists={}, nodemaplist=[], p
                 contains1_json = [x for i, x in enumerate(sdkzip.namelist()) if x.find('deploy.json') != -1]
                 if len(contains1) > 0:
                     xml = sdkzip.extract(contains1[0], path=None, pwd=None)
-                    re = xml2excel(cover_map, xml, excel_path, lists, nodemaplist, packagelist, filter_map, exclude_app)
+                    re = xml2excel(parent_map, cover_map, xml, excel_path, lists, nodemaplist, packagelist,
+                                   filter_map, exclude_app)
                     os.remove(xml)
                     log.logger.info('当前压缩文件【{}】处理完成！\n'.format(zip_name))
                 elif len(contains1_json) > 0:
@@ -1647,7 +1706,7 @@ def main(excel_path, exclude_app, dirs, new_excel_path, package_type):
 
     filter_map = sheet2set(excel_path, "默认参数配置页", [3, 4, 5])
     cover_map = appname2paramsmap(excel_path, "默认参数配置页", [3, 4, 5], True, 10)
-
+    parent_map = {}  # 记录父级参数增加批注使用
     for f in map:
         curpath = map[f][4]
         if not os.path.exists(curpath.decode("utf-8")):
@@ -1655,7 +1714,8 @@ def main(excel_path, exclude_app, dirs, new_excel_path, package_type):
         log.logger.info('正在处理：【' + curpath + '】')
         try:
             z = zipfile.ZipFile(curpath.decode("utf-8"), "r")
-            result = deal_zip(z, curpath, excel_path, map[f], nodemaplist, packagelist, exclude_app, filter_map,
+            result = deal_zip(parent_map, z, curpath, excel_path, map[f], nodemaplist, packagelist, exclude_app,
+                              filter_map,
                               cover_map)
             if result:
                 success_count = success_count + 1
@@ -1693,6 +1753,7 @@ def main(excel_path, exclude_app, dirs, new_excel_path, package_type):
     modify_sheet_col_width(excel_path, "参数配置表")
     modify_sheet_col_width(excel_path, "安装包列表")
     modify_sheet_col_width(excel_path, "全局参数")
+    add_comment(parent_map, excel_path, "参数配置表")
 
 
 if __name__ == '__main__':
