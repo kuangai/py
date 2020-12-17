@@ -503,6 +503,9 @@ def deal_inner_field_self(field, params, systemType, appType, appName, nodeId, f
             text = field.attrib.get("default")
     else:
         text = field.text.strip()
+        if text == "":
+            if field.attrib.get("default") is not None:
+                text = field.attrib.get("default")
 
     one['参数值'] = text
     one["一级类型"] = systemType
@@ -1210,9 +1213,6 @@ def xml2excel(cover_map={}, xml_path=None, excel_path=None, lists={}, nodemaplis
 
                 # 私有节点参数
                 node = system.find('node')
-                if node is not None and system.attrib.get('id') is not None:
-                    deal_node_params(node, params, systemType, appType, appName, system.attrib.get('id'),
-                                     support_param_types, filter_map)
 
                 fields = variables.findall('field')
                 for field in fields:
@@ -1257,6 +1257,10 @@ def xml2excel(cover_map={}, xml_path=None, excel_path=None, lists={}, nodemaplis
                                              system.attrib.get('id'),
                                              filter_map)
 
+                if node is not None and system.attrib.get('id') is not None:
+                    deal_node_params(node, params, systemType, appType, appName, system.attrib.get('id'),
+                                     support_param_types, filter_map)
+
                 nodemaplist.append(nodemap)
 
         paramsdf = DataFrame(
@@ -1273,7 +1277,7 @@ def xml2excel(cover_map={}, xml_path=None, excel_path=None, lists={}, nodemaplis
         try:
             for k in range(0, len(params)):
                 var = params[k]
-                if var["参数值"] is None  or var["参数值"].strip() == "":
+                if var["参数值"] is None  or str(var["参数值"]).strip() == "":
                     continue
                 s = []
                 s.append(str(var['一级类型']).strip())
