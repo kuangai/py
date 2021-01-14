@@ -16,6 +16,8 @@ from logging import handlers
 from openpyxl.utils import get_column_letter
 import io
 from openpyxl.comments import Comment
+from time import mktime
+from datetime import datetime
 
 reload(sys)
 sys.setdefaultencoding('UTF-8')
@@ -54,6 +56,17 @@ class Logger(object):
         self.logger.addHandler(sh)  # 把对象加到logger里
         self.logger.addHandler(th)
 
+def is_valid_date(str):
+  '''判断是否是一个有效的日期字符串'''
+  try:
+    strut_time = time.strptime(str, "%Y-%m-%d")
+    return {"valid":True,"strut_time":strut_time}
+  except:
+    try:
+        strut_time = time.strptime(str, "%Y-%m-%d %H:%M:%S")
+        return {"valid":True,"strut_time":strut_time}
+    except:
+        return {"valid":False}
 
 #  加批注 该参数仅在上级开关【】开启后生效
 def add_comment(parent_map={}, path='F:\\test\\test.xlsx', sheet_name='参数配置表'):
@@ -853,6 +866,20 @@ def hidden_sheet(path='D:\\test\\test.xlsx'):
     log.logger.info("隐藏sheet  spent time: " + str(t2 - t1) + "s")
 
 
+def show_sheet(path='D:\\test\\test.xlsx'):
+    t1 = time.time()
+    show_list = ['参数配置表']
+    workbook = load_workbook(path)  # 打开要写入数据的工作簿
+    for sheet_name in show_list:
+        if sheet_name in workbook.sheetnames:
+            sheet = workbook[sheet_name]  # 打开要编辑的工作表
+            sheet.sheet_state = 'visible'
+    workbook.save(path)
+    workbook.close()
+    t2 = time.time()
+    log.logger.info("显示sheet  spent time: " + str(t2 - t1) + "s")
+
+
 def write_excel_node(path, sheet_name, listmap=[]):
     t1 = time.time()
     if len(listmap) == 0:
@@ -910,6 +937,9 @@ def deal_node_params(parent_map={}, node=None, params=None, systemType=None, app
             param_val = text
             if param_val is None or param_val.strip() == '':
                 param_val = field.attrib.get('default')
+
+            if param_val is None:
+                continue
 
             if field.attrib.get('name') != "grid":
                 param_val = "[all|" + str(param_val) + "]"
@@ -1029,7 +1059,7 @@ def write_excel_append(path, sheet_name, dateframe=None):
         if start_row <= 1:
             #  sheet 已存在，直接追加会新增一个同名的sheet页，所以先复制再追加。
             writer.sheets = dict((ws.title, ws) for ws in workbook.worksheets)  # 复制已存在的sheet
-            dateframe.to_excel(writer, sheet_name=sheet_name, index=False, header=True)
+            dateframe.to_excel(writer, sheet_name=sheet_name.decode("utf-8"), index=False, header=True)
             writer.save()
             writer.close()
             return True
@@ -1374,8 +1404,14 @@ def xml2excel(parent_map={}, cover_map={}, xml_path=None, excel_path=None, lists
                 s.append(var['参数类型'])
                 s.append("")
                 datestr = var['参数新增时间']
-                if datestr is not None and str(datestr).strip() != '':
+                if datestr is not None and str(datestr).strip() != '' and str(datestr.__class__) == '<type \'datetime.datetime\'>':
                     datestr = str(datestr.date())
+                else:
+                    if datestr is not None and str(datestr).strip() != '':
+                        # 校验并转换
+                        re = is_valid_date(datestr)
+                        if re["valid"] is True:
+                            datestr = str(datetime.fromtimestamp(mktime(re["strut_time"])).date())
 
                 s.append(datestr)
                 paramsdf.loc[k] = s
@@ -1740,12 +1776,12 @@ def main(excel_path, exclude_app, dirs, new_excel_path, package_type):
         log.logger.critical('请先修改默认参数配置页中的异常配置...')
         return False
 
-    sheet_name = "参数配置表"
-    workbook = load_workbook(excel_path)
-    if sheet_name in workbook.sheetnames:
-        workbook.remove(workbook[sheet_name])
-        workbook.save(excel_path)
-        workbook.close()
+    # sheet_name = "参数配置表"
+    # workbook = load_workbook(excel_path)
+    # if sheet_name in workbook.sheetnames:
+    #     workbook.remove(workbook[sheet_name])
+    #     workbook.save(excel_path)
+    #     workbook.close()
 
     filter_map = sheet2set(excel_path, "默认参数配置页", [3, 4, 5])
     cover_map = appname2paramsmap(excel_path, "默认参数配置页", [3, 4, 5], True, 10)
@@ -1793,6 +1829,7 @@ def main(excel_path, exclude_app, dirs, new_excel_path, package_type):
             log.logger.info(s)
 
     hidden_sheet(excel_path)
+    show_sheet(excel_path)
     adjustSheetOrder(excel_path)
     modify_sheet_col_width(excel_path)
     add_comment(parent_map, excel_path, "参数配置表")
