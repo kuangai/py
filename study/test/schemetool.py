@@ -579,10 +579,10 @@ def deal_inner_field_self(field, params, systemType, appType, appName, nodeId, f
     if zgfieldtype is None or str(zgfieldtype) == '':
         zgfieldtype = "默认"
     one["参数类型"] = zgfieldtype
-    zgfiledtime = field.attrib.get('zgfiledtime')
-    if zgfiledtime is None:
-        zgfiledtime = ""
-    one["参数新增时间"] = zgfiledtime
+    zgfieldtime = field.attrib.get('zgfieldtime')
+    if zgfieldtime is None:
+        zgfieldtime = ""
+    one["参数新增时间"] = zgfieldtime
     isfilter = filter_map.get(str(appName + "#" + one["节点id"] + "#" + one["参数"] + "#"))
     if (isfilter is None or isfilter is not True):
         params.append(one)
@@ -643,10 +643,10 @@ def deal_inner_field(parent_map, field1, support_param_types, params, systemType
                     if zgfieldtype is None or str(zgfieldtype) == '':
                         zgfieldtype = "默认"
                     one["参数类型"] = zgfieldtype
-                    zgfiledtime = field.attrib.get('zgfiledtime')
-                    if zgfiledtime is None:
-                        zgfiledtime = ""
-                    one["参数新增时间"] = zgfiledtime
+                    zgfieldtime = field.attrib.get('zgfieldtime')
+                    if zgfieldtime is None:
+                        zgfieldtime = ""
+                    one["参数新增时间"] = zgfieldtime
                     isfilter = filter_map.get(str(appName + "#" + one["节点id"] + "#" + one["参数"] + "#"))
                     if (isfilter is None or isfilter is not True):
                         params.append(one)
@@ -955,10 +955,10 @@ def deal_node_params(parent_map={}, node=None, params=None, systemType=None, app
             if zgfieldtype is None or str(zgfieldtype) == '':
                 zgfieldtype = "默认"
             one["参数类型"] = zgfieldtype
-            zgfiledtime = field.attrib.get('zgfiledtime')
-            if zgfiledtime is None:
-                zgfiledtime = ""
-            one["参数新增时间"] = zgfiledtime
+            zgfieldtime = field.attrib.get('zgfieldtime')
+            if zgfieldtime is None:
+                zgfieldtime = ""
+            one["参数新增时间"] = zgfieldtime
             isfilter = filter_map.get(str(appName + "#" + nodeId + "#" + one["参数"] + "#"))
             if isfilter is None or isfilter is not True:
                 params.append(one)
@@ -1225,10 +1225,10 @@ def xml2excel(parent_map={}, cover_map={}, xml_path=None, excel_path=None, lists
                         if zgfieldtype is None or str(zgfieldtype) == '':
                             zgfieldtype = "默认"
                         grid_param["参数类型"] = zgfieldtype
-                        zgfiledtime = grid.attrib.get('zgfiledtime')
-                        if zgfiledtime is None:
-                            zgfiledtime = ""
-                        grid_param["参数新增时间"] = zgfiledtime
+                        zgfieldtime = grid.attrib.get('zgfieldtime')
+                        if zgfieldtime is None:
+                            zgfieldtime = ""
+                        grid_param["参数新增时间"] = zgfieldtime
 
                         if isfilter is None or isfilter is not True:
                             params.append(grid_param)
@@ -1256,10 +1256,10 @@ def xml2excel(parent_map={}, cover_map={}, xml_path=None, excel_path=None, lists
                         if zgfieldtype is None or str(zgfieldtype) == '':
                             zgfieldtype = "默认"
                         one["参数类型"] = zgfieldtype
-                        zgfiledtime = field.attrib.get('zgfiledtime')
-                        if zgfiledtime is None:
-                            zgfiledtime = ""
-                        one["参数新增时间"] = zgfiledtime
+                        zgfieldtime = field.attrib.get('zgfieldtime')
+                        if zgfieldtime is None:
+                            zgfieldtime = ""
+                        one["参数新增时间"] = zgfieldtime
                         isfilter = filter_map.get(str(appName + "#" + one["节点id"] + "#" + one["参数"] + "#"))
                         if isfilter is None or isfilter is not True:
                             params.append(one)
@@ -1314,10 +1314,10 @@ def xml2excel(parent_map={}, cover_map={}, xml_path=None, excel_path=None, lists
                         if zgfieldtype is None or str(zgfieldtype) == '':
                             zgfieldtype = "默认"
                         grid_param["参数类型"] = zgfieldtype
-                        zgfiledtime = grid.attrib.get('zgfiledtime')
-                        if zgfiledtime is None:
-                            zgfiledtime = ""
-                        grid_param["参数新增时间"] = zgfiledtime
+                        zgfieldtime = grid.attrib.get('zgfieldtime')
+                        if zgfieldtime is None:
+                            zgfieldtime = ""
+                        grid_param["参数新增时间"] = zgfieldtime
 
                         if isfilter is None or isfilter is not True:
                             params.append(grid_param)
@@ -1357,10 +1357,10 @@ def xml2excel(parent_map={}, cover_map={}, xml_path=None, excel_path=None, lists
                         if zgfieldtype is None or str(zgfieldtype) == '':
                             zgfieldtype = "默认"
                         one["参数类型"] = zgfieldtype
-                        zgfiledtime = field.attrib.get('zgfiledtime')
-                        if zgfiledtime is None:
-                            zgfiledtime = ""
-                        one["参数新增时间"] = zgfiledtime
+                        zgfieldtime = field.attrib.get('zgfieldtime')
+                        if zgfieldtime is None:
+                            zgfieldtime = ""
+                        one["参数新增时间"] = zgfieldtime
                         isfilter = filter_map.get(str(appName + "#" + one["节点id"] + "#" + one["参数"] + "#"))
                         if isfilter is None or isfilter is not True:
                             params.append(one)
