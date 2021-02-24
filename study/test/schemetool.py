@@ -768,21 +768,20 @@ def deal_database_param(databases=None, params=None, systemType=None, appType=No
                         params.append(one)
 
                     backup = database.attrib.get("backup")
-                    if backup is None:
-                        backup = "true"
-                    one = {}
-                    one['参数值'] = backup
-                    one["一级类型"] = systemType
-                    one["二级类型"] = appType
-                    one["应用名称"] = appName
-                    one["节点id"] = nodeId
-                    one["参数"] = "database|" + database.attrib.get("id") + ":" + "backup"
-                    one["参数说明"] = "id为【" + database.attrib.get("id") + "】的数据库是否备份"
-                    one["参数类型"] = "数据库"
-                    one["参数新增时间"] = ''
-                    isfilter = filter_map.get(str(appName + "#" + nodeId + "#" + one["参数"] + "#"))
-                    if isfilter is None or isfilter is not True:
-                        params.append(one)
+                    if backup is not None:
+                        one = {}
+                        one['参数值'] = backup
+                        one["一级类型"] = systemType
+                        one["二级类型"] = appType
+                        one["应用名称"] = appName
+                        one["节点id"] = nodeId
+                        one["参数"] = "database|" + database.attrib.get("id") + ":" + "backup"
+                        one["参数说明"] = "id为【" + database.attrib.get("id") + "】的数据库是否备份"
+                        one["参数类型"] = "数据库"
+                        one["参数新增时间"] = ''
+                        isfilter = filter_map.get(str(appName + "#" + nodeId + "#" + one["参数"] + "#"))
+                        if isfilter is None or isfilter is not True:
+                            params.append(one)
 
                     user = database.attrib.get("user")
                     if user is not None:
