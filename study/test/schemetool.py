@@ -971,10 +971,12 @@ def deal_node_params(parent_map={}, node=None, params=None, systemType=None, app
             isfilter = filter_map.get(str(appName + "#" + nodeId + "#" + one["参数"] + "#"))
 
             visible = field.attrib.get('visible')
-            if visible is None or str(visible) == '' or  str(visible) == 'false':
+            if visible is None or str(visible) == '' or  str(visible) == 'true':
+                visible = True
+            if str(visible) == 'false':
                 visible = False
 
-            if ((isfilter is None or isfilter is not True) and visible is False):
+            if ((isfilter is None or isfilter is not True) and visible is True):
                 params.append(one)
         else:
             if field is not None and field.attrib.get("type") != 'grid':
