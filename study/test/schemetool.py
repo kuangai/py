@@ -584,7 +584,12 @@ def deal_inner_field_self(field, params, systemType, appType, appName, nodeId, f
         zgfieldtime = ""
     one["参数新增时间"] = zgfieldtime
     isfilter = filter_map.get(str(appName + "#" + one["节点id"] + "#" + one["参数"] + "#"))
-    if (isfilter is None or isfilter is not True):
+
+    visible = field.attrib.get('visible')
+    if visible is None or str(visible) == '' or  str(visible) == 'false':
+        visible = False
+
+    if ((isfilter is None or isfilter is not True) and visible is False):
         params.append(one)
 
 
@@ -648,7 +653,12 @@ def deal_inner_field(parent_map, field1, support_param_types, params, systemType
                         zgfieldtime = ""
                     one["参数新增时间"] = zgfieldtime
                     isfilter = filter_map.get(str(appName + "#" + one["节点id"] + "#" + one["参数"] + "#"))
-                    if (isfilter is None or isfilter is not True):
+
+                    visible = field.attrib.get('visible')
+                    if visible is None or str(visible) == '' or  str(visible) == 'false':
+                        visible = False
+
+                    if ((isfilter is None or isfilter is not True) and visible is False):
                         params.append(one)
 
                 else:
@@ -959,7 +969,12 @@ def deal_node_params(parent_map={}, node=None, params=None, systemType=None, app
                 zgfieldtime = ""
             one["参数新增时间"] = zgfieldtime
             isfilter = filter_map.get(str(appName + "#" + nodeId + "#" + one["参数"] + "#"))
-            if isfilter is None or isfilter is not True:
+
+            visible = field.attrib.get('visible')
+            if visible is None or str(visible) == '' or  str(visible) == 'false':
+                visible = False
+
+            if ((isfilter is None or isfilter is not True) and visible is False):
                 params.append(one)
         else:
             if field is not None and field.attrib.get("type") != 'grid':
@@ -1229,7 +1244,11 @@ def xml2excel(parent_map={}, cover_map={}, xml_path=None, excel_path=None, lists
                             zgfieldtime = ""
                         grid_param["参数新增时间"] = zgfieldtime
 
-                        if isfilter is None or isfilter is not True:
+                        visible = grid.attrib.get('visible')
+                        if visible is None or str(visible) == '' or  str(visible) == 'false':
+                            visible = False
+
+                        if ((isfilter is None or isfilter is not True) and visible is False):
                             params.append(grid_param)
                             deal_grid_params(excel_path, grid, sheet_name, deal_flag)
                 # 常规参数
@@ -1260,7 +1279,11 @@ def xml2excel(parent_map={}, cover_map={}, xml_path=None, excel_path=None, lists
                             zgfieldtime = ""
                         one["参数新增时间"] = zgfieldtime
                         isfilter = filter_map.get(str(appName + "#" + one["节点id"] + "#" + one["参数"] + "#"))
-                        if isfilter is None or isfilter is not True:
+
+                        visible = field.attrib.get('visible')
+                        if visible is None or str(visible) == '' or  str(visible) == 'false':
+                            visible = False
+                        if ((isfilter is None or isfilter is not True) and visible is False):
                             params.append(one)
                     else:
                         if field is not None and field.attrib.get("type") != 'grid':
@@ -1318,7 +1341,11 @@ def xml2excel(parent_map={}, cover_map={}, xml_path=None, excel_path=None, lists
                             zgfieldtime = ""
                         grid_param["参数新增时间"] = zgfieldtime
 
-                        if isfilter is None or isfilter is not True:
+                        visible = grid.attrib.get('visible')
+                        if visible is None or str(visible) == '' or  str(visible) == 'false':
+                            visible = False
+
+                        if ((isfilter is None or isfilter is not True) and visible is False):
                             params.append(grid_param)
                             deal_grid_params(excel_path, grid, sheet_name, deal_flag)
                     time2 = time.time()
@@ -1361,7 +1388,13 @@ def xml2excel(parent_map={}, cover_map={}, xml_path=None, excel_path=None, lists
                             zgfieldtime = ""
                         one["参数新增时间"] = zgfieldtime
                         isfilter = filter_map.get(str(appName + "#" + one["节点id"] + "#" + one["参数"] + "#"))
-                        if isfilter is None or isfilter is not True:
+
+                        visible = field.attrib.get('visible')
+                        if visible is None or str(visible) == '' or  str(visible) == 'false':
+                            visible = False
+
+
+                        if ((isfilter is None or isfilter is not True) and visible is False):
                             params.append(one)
                     else:
                         if field is not None and field.attrib.get("type") != 'grid':
@@ -1836,40 +1869,48 @@ def main(excel_path, exclude_app, dirs, new_excel_path, package_type):
 
 if __name__ == '__main__':
     conf = load_conf()
-    log = Logger('log\schemetool.log', level=conf.get('log_level'))
+    log_path = 'log\schemetool.log'
+    package_type = "oracle"
     exclude_app = ""
     excel_path = ""
     new_excel_path = ""
     dirs = ""
 
-    log.logger.info("---------------------------------------------------------")
-    log.logger.info("-----------------------   begin   -----------------------")
-    log.logger.info("---------------------------------------------------------")
     for i in range(0, len(sys.argv)):
-        log.logger.info(sys.argv[i].decode('gbk').encode('utf8'))
+        print (sys.argv[i].decode('gbk').encode('utf8'))
     if len(sys.argv) >= 4 and sys.argv[1].endswith('.xlsx'):
         excel_path = sys.argv[1].decode('gbk').encode('utf8').decode("utf-8")
         dirs = sys.argv[2].decode('gbk').encode('utf8').decode("utf-8")
         new_excel_path = sys.argv[3].decode('gbk').encode('utf8').decode("utf-8")
 
-        package_type = "oracle"
         if len(sys.argv) >= 5:
             tmp_type = sys.argv[4]
             if tmp_type is not None and tmp_type.strip() != '':
-                if tmp_type.lower() == 'mysql' or tmp_type.lower() == 'oracle':
-                    package_type = tmp_type
-                else:
-                    log.logger.critical('命令行参数不正确，Usage: ' + sys.argv[
-                        0] + ' 配置方案全路径(.xlsx结尾)' + ' 部署包所在目录' + ' 生成方案全路径(.xlsx结尾)' + ' [部署包数据库类型(mysql或oracle)，本参数为可选参数，不填写默认为oracle]')
+                try:
+                    tmp_path = '\\'.join(tmp_type.split("\\")[0:-1])
+                    if not os.path.exists(tmp_path):
+                        os.makedirs(tmp_path)
+
+                    tmp_file = tmp_type.split("\\")[-1]
+                    if tmp_file is None:
+                        tmp_file = 'schemetool.log'
+
+                    if tmp_path is not None and tmp_file is not None:
+                        log_path = tmp_path + '\\' + tmp_file
+                except:
+                    print ('命令行参数不正确，Usage: ' + sys.argv[
+                        0] + ' 配置方案全路径(.xlsx结尾)' + ' 部署包所在目录' + ' 生成方案全路径(.xlsx结尾)' + ' 日志文件绝对路径[默认log\schemetool.log]')
                     time.sleep(3)
                     sys.exit('end……')
 
+
     else:
-        log.logger.critical('命令行参数不正确，Usage: ' + sys.argv[
-            0] + ' 配置方案全路径(.xlsx结尾)' + ' 部署包所在目录' + ' 生成方案全路径(.xlsx结尾)' + ' [部署包数据库类型(mysql或oracle)，本参数为可选参数，不填写默认为oracle]')
+        print ('命令行参数不正确，Usage: ' + sys.argv[
+            0] + ' 配置方案全路径(.xlsx结尾)' + ' 部署包所在目录' + ' 生成方案全路径(.xlsx结尾)' + ' 日志文件绝对路径[默认log\schemetool.log]')
         time.sleep(3)
         sys.exit('end……')
 
+    log = Logger(log_path, level=conf.get('log_level'))
     exclude_app = conf.get('exclude_app')
     if os.path.exists(excel_path) and excel_path.endswith('.xlsx'):
         log.logger.info('配置excel路径OK……')
