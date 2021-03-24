@@ -586,10 +586,13 @@ def deal_inner_field_self(field, params, systemType, appType, appName, nodeId, f
     isfilter = filter_map.get(str(appName + "#" + one["节点id"] + "#" + one["参数"] + "#"))
 
     visible = field.attrib.get('visible')
-    if visible is None or str(visible) == '' or  str(visible) == 'false':
-        visible = False
 
-    if ((isfilter is None or isfilter is not True) and visible is False):
+    if str(visible) == 'false':
+        visible = False
+    else:
+        visible = True
+
+    if ((isfilter is None or isfilter is not True) and visible is True):
         params.append(one)
 
 
@@ -655,10 +658,13 @@ def deal_inner_field(parent_map, field1, support_param_types, params, systemType
                     isfilter = filter_map.get(str(appName + "#" + one["节点id"] + "#" + one["参数"] + "#"))
 
                     visible = field.attrib.get('visible')
-                    if visible is None or str(visible) == '' or  str(visible) == 'false':
-                        visible = False
 
-                    if ((isfilter is None or isfilter is not True) and visible is False):
+                    if str(visible) == 'false':
+                        visible = False
+                    else:
+                        visible = True
+
+                    if ((isfilter is None or isfilter is not True) and visible is True):
                         params.append(one)
 
                 else:
@@ -971,10 +977,11 @@ def deal_node_params(parent_map={}, node=None, params=None, systemType=None, app
             isfilter = filter_map.get(str(appName + "#" + nodeId + "#" + one["参数"] + "#"))
 
             visible = field.attrib.get('visible')
-            if visible is None or str(visible) == '' or  str(visible) == 'true':
-                visible = True
+
             if str(visible) == 'false':
                 visible = False
+            else:
+                visible = True
 
             if ((isfilter is None or isfilter is not True) and visible is True):
                 params.append(one)
@@ -1247,10 +1254,14 @@ def xml2excel(parent_map={}, cover_map={}, xml_path=None, excel_path=None, lists
                         grid_param["参数新增时间"] = zgfieldtime
 
                         visible = grid.attrib.get('visible')
-                        if visible is None or str(visible) == '' or  str(visible) == 'false':
-                            visible = False
 
-                        if ((isfilter is None or isfilter is not True) and visible is False):
+                        if str(visible) == 'false':
+                            visible = False
+                        else:
+                            visible = True
+
+
+                        if ((isfilter is None or isfilter is not True) and visible is True):
                             params.append(grid_param)
                             deal_grid_params(excel_path, grid, sheet_name, deal_flag)
                 # 常规参数
@@ -1283,9 +1294,13 @@ def xml2excel(parent_map={}, cover_map={}, xml_path=None, excel_path=None, lists
                         isfilter = filter_map.get(str(appName + "#" + one["节点id"] + "#" + one["参数"] + "#"))
 
                         visible = field.attrib.get('visible')
-                        if visible is None or str(visible) == '' or  str(visible) == 'false':
+
+                        if str(visible) == 'false':
                             visible = False
-                        if ((isfilter is None or isfilter is not True) and visible is False):
+                        else:
+                            visible = True
+
+                        if ((isfilter is None or isfilter is not True) and visible is True):
                             params.append(one)
                     else:
                         if field is not None and field.attrib.get("type") != 'grid':
@@ -1344,10 +1359,13 @@ def xml2excel(parent_map={}, cover_map={}, xml_path=None, excel_path=None, lists
                         grid_param["参数新增时间"] = zgfieldtime
 
                         visible = grid.attrib.get('visible')
-                        if visible is None or str(visible) == '' or  str(visible) == 'false':
-                            visible = False
 
-                        if ((isfilter is None or isfilter is not True) and visible is False):
+                        if str(visible) == 'false':
+                            visible = False
+                        else:
+                            visible = True
+
+                        if ((isfilter is None or isfilter is not True) and visible is True):
                             params.append(grid_param)
                             deal_grid_params(excel_path, grid, sheet_name, deal_flag)
                     time2 = time.time()
@@ -1392,11 +1410,13 @@ def xml2excel(parent_map={}, cover_map={}, xml_path=None, excel_path=None, lists
                         isfilter = filter_map.get(str(appName + "#" + one["节点id"] + "#" + one["参数"] + "#"))
 
                         visible = field.attrib.get('visible')
-                        if visible is None or str(visible) == '' or  str(visible) == 'false':
+
+                        if str(visible) == 'false':
                             visible = False
+                        else:
+                            visible = True
 
-
-                        if ((isfilter is None or isfilter is not True) and visible is False):
+                        if ((isfilter is None or isfilter is not True) and visible is True):
                             params.append(one)
                     else:
                         if field is not None and field.attrib.get("type") != 'grid':
