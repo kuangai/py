@@ -1,0 +1,1 @@
+select * from bb_tfundinfo where fund_name like '%%'

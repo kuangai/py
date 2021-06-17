@@ -13,3 +13,7 @@ def diff_lastModifyTime_now(filePath = os.getcwd()+"/proxy.json"):
     print("文件：{}， 距离现在{}小时".format(filePath,diffours))
 
 # diff_lastModifyTime_now();
+
+def readtxt(path="sql.txt"):
+    with open(path, encoding='UTF-8-sig', errors="ignore") as file_obj:
+        return file_obj.read()
